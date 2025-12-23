@@ -1,12 +1,11 @@
 <template>
   <main class="flex-1 overflow-y-auto">
-    <!-- 헤더 -->
-    <header class="bg-white px-8 py-6 border-b border-gray-200 shadow-sm">
-      <h1 class="text-2xl font-bold text-gray-800">나의 농장 진단</h1>
-      <p class="text-gray-500 text-sm mt-1">농장 정보를 확인하고 AI 기반 운영 등급과 조언을 받아보세요</p>
-    </header>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
+      <PageHeader title="나의 농장" description="농장 정보를 확인하고 AI 기반 운영 등급과 조언을 받아보세요" />
+    </div>
 
-    <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto w-full">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full pt-4 pb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- 농장 정보 카드 -->
       <div v-if="farm" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
         <h2 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -192,11 +191,14 @@
         <h3 class="text-lg font-bold text-gray-400">평가 대기 중</h3>
         <p class="text-sm text-gray-400 max-w-xs mt-2">농장을 등록하면 AI 진단 결과를 확인할 수 있습니다.</p>
       </div>
+      </div>
     </div>
   </main>
 </template>
 
 <script setup>
+import PageHeader from '@/components/layout/PageHeader.vue';
+
 defineProps({
   farm: {
     type: Object,

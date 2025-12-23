@@ -1,19 +1,15 @@
 <template>
-  <main class="flex-1 overflow-y-auto p-8 bg-gray-50">
-    <div class="mx-auto max-w-5xl space-y-8">
-      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+  <main class="flex-1 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
-          <h1 class="text-4xl font-extrabold tracking-tight text-gray-900">기사</h1>
-          <p class="mt-2 text-lg text-gray-600">야채랑 PICK이 엄선한 농촌 소식을 만나보세요.</p>
+          <PageHeader title="농촌 기사" description="야채랑 PICK이 엄선한 농촌 소식을 만나보세요." />
         </div>
-
-        <ArticleSearchBar
-          v-model="searchQuery"
-          @search="handleSearch"
-          @clear="handleClearSearch"
-        />
+        <ArticleSearchBar v-model="searchQuery" @search="handleSearch" @clear="handleClearSearch" />
       </div>
+    </div>
 
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full space-y-8">
       <div v-if="articles.length" class="grid gap-6">
         <ArticleCard
           v-for="article in articles"
@@ -24,17 +20,9 @@
         />
       </div>
 
-      <ArticleEmptyState
-        v-else
-        :keyword="searchQuery"
-        @reset="handleResetSearch"
-      />
+      <ArticleEmptyState v-else :keyword="searchQuery" @reset="handleResetSearch" />
 
-      <ArticlePagination
-        :current-page="currentPage"
-        :total-pages="totalPages"
-        @change-page="goToPage"
-      />
+      <ArticlePagination :current-page="currentPage" :total-pages="totalPages" @change-page="goToPage" />
     </div>
   </main>
 </template>
@@ -48,6 +36,7 @@ import ArticleSearchBar from '@/views/article/components/ArticleSearchBar.vue';
 import ArticleCard from '@/views/article/components/ArticleCard.vue';
 import ArticlePagination from '@/views/article/components/ArticlePagination.vue';
 import ArticleEmptyState from '@/views/article/components/ArticleEmptyState.vue';
+import PageHeader from '@/components/layout/PageHeader.vue';
 
 const router = useRouter();
 const searchQuery = ref('');

@@ -1,17 +1,15 @@
 <template>
-  <div 
-    class="flex h-screen overflow-hidden"
-    :class="$route.meta.hideSidebar"
-  >
-    <SideBar v-if="!$route.meta.hideSidebar" />
-    <main 
-      class="flex-1 overflow-y-auto"
-      :class="{ 'w-full': $route.meta.hideSidebar }"
-    >
-      <RouterView />
-    </main>
+  <div class="flex h-screen overflow-hidden flex-col" :class="$route.meta.hideSidebar">
+    <div class="flex flex-1 overflow-hidden">
+      <SideBar v-if="!$route.meta.hideSidebar" />
+      <main class="flex-1 overflow-y-auto flex flex-col" :class="{ 'w-full': $route.meta.hideSidebar }">
+        <div class="flex-1 min-h-0">
+          <RouterView />
+        </div>
+      </main>
+    </div>
   </div>
-  
+
   <!-- Toast -->
   <div v-if="toast.visible" class="toast" :class="toast.type">
     {{ toast.message }}
@@ -19,17 +17,18 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useToastStore } from '@/stores/toast'
-import SideBar from '@/components/layout/SideBar.vue'
+import { onMounted } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useToastStore } from '@/stores/toast';
+import SideBar from '@/components/layout/SideBar.vue';
+import Footer from '@/components/layout/Footer.vue';
 
-const { checkAuth } = useAuthStore()
-const toast = useToastStore()
+const { checkAuth } = useAuthStore();
+const toast = useToastStore();
 
 onMounted(() => {
-  checkAuth()
-})
+  checkAuth();
+});
 </script>
 
 <style>

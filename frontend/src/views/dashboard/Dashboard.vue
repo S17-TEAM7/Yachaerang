@@ -1,70 +1,71 @@
 <template>
-  <main class="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6 bg-gray-50 font-sans">
-    <div class="flex justify-between items-end mb-1 gap-4">
-      <div class="min-w-0">
-        <h1 class="text-xl md:text-2xl font-bold tracking-tight text-gray-900">세부 가격 검색</h1>
-
-        <p class="text-gray-500 text-[10px] md:text-xs">전국 주요 시장 상세 시세 분석 데이터</p>
+  <main class="min-h-screen bg-gray-50 pb-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
+      <div class="flex justify-between items-center gap-4">
+        <div class="min-w-0 flex-1">
+          <PageHeader title="대시보드" description="전국 주요 시장 상세 시세 분석 데이터" />
+        </div>
+        <FavoriteButton @click="handleAddFavorite" />
       </div>
-
-      <FavoriteButton @click="handleAddFavorite" />
     </div>
 
-    <div class="grid grid-cols-12 gap-4 md:gap-6">
-      <div class="col-span-12 lg:col-span-3 lg:col-start-10 order-1 lg:order-2 flex flex-col gap-4">
-        <DashboardFilter
-          v-model:selectedItem="selectedItem"
-          v-model:selectedVariety="selectedVariety"
-          v-model:dayStartDate="dayStartDate"
-          v-model:dayEndDate="dayEndDate"
-          v-model:weekStartDate="weekStartDate"
-          v-model:weekEndDate="weekEndDate"
-          v-model:monthStartDate="monthStartDate"
-          v-model:monthEndDate="monthEndDate"
-          v-model:yearStart="yearStart"
-          v-model:yearEnd="yearEnd"
-          :yearOptions="yearOptions"
-          :itemOptions="itemOptions"
-          :varietyOptions="varietyOptions"
-          :periodTabs="periodTabs"
-          :currentPeriod="periodType"
-          :selectedItemName="selectedItemLabel"
-          @updatePeriod="handlePeriodClick"
-          @search="triggerSearch"
-        />
+    <div class="max-w-9xl mx-auto px-4 sm:px-6 pt-2 w-full">
+      <div class="grid grid-cols-12 gap-4 md:gap-6 pt-2">
+        <div class="col-span-12 lg:col-span-3 lg:col-start-10 order-1 lg:order-2 flex flex-col gap-4">
+          <DashboardFilter
+            v-model:selectedItem="selectedItem"
+            v-model:selectedVariety="selectedVariety"
+            v-model:dayStartDate="dayStartDate"
+            v-model:dayEndDate="dayEndDate"
+            v-model:weekStartDate="weekStartDate"
+            v-model:weekEndDate="weekEndDate"
+            v-model:monthStartDate="monthStartDate"
+            v-model:monthEndDate="monthEndDate"
+            v-model:yearStart="yearStart"
+            v-model:yearEnd="yearEnd"
+            :yearOptions="yearOptions"
+            :itemOptions="itemOptions"
+            :varietyOptions="varietyOptions"
+            :periodTabs="periodTabs"
+            :currentPeriod="periodType"
+            :selectedItemName="selectedItemLabel"
+            @updatePeriod="handlePeriodClick"
+            @search="triggerSearch"
+          />
 
-        <RecentViewedItems :items="recentItems" @select="handleRecentSelect" @clear="clearRecentSearches" />
-      </div>
-
-      <div class="col-span-12 lg:col-span-9 order-2 lg:order-1 flex flex-col gap-4">
-        <DashboardSummary
-          :priceResult="priceResult"
-          :lastYearPrices="lastYearPrices"
-          :itemName="selectedItemLabel"
-          :varietyName="selectedVarietyLabel"
-          :hasSearched="hasSearched"
-          :periodType="periodType"
-          :dateRangeLabel="currentDateRangeLabel"
-        />
-
-        <div
-          v-if="!hasSearched"
-          class="bg-white p-20 rounded-xl border border-gray-200 text-center text-gray-400 shadow-sm"
-        >
-          <p class="animate-pulse">데이터를 조회 중입니다...</p>
+          <RecentViewedItems :items="recentItems" @select="handleRecentSelect" @clear="clearRecentSearches" />
         </div>
 
-        <EmptyResult v-else-if="hasSearched && (!priceResult || priceResult.length === 0)" />
-
-        <template v-else>
-          <ResultGraph :chartData="formattedChartData" />
-          <ResultTable
-            :paginatedData="paginatedData"
-            :totalPages="totalPages"
-            :currentPage="currentPage"
-            @updatePage="(p) => (currentPage = p)"
+        <div class="col-span-12 lg:col-span-9 order-2 lg:order-1 flex flex-col gap-4">
+          <DashboardSummary
+            :priceResult="priceResult"
+            :lastYearPrices="lastYearPrices"
+            :itemName="selectedItemLabel"
+            :varietyName="selectedVarietyLabel"
+            :hasSearched="hasSearched"
+            :periodType="periodType"
+            :dateRangeLabel="currentDateRangeLabel"
           />
-        </template>
+
+          <div
+            v-if="!hasSearched"
+            class="bg-white p-20 rounded-xl border border-gray-200 text-center text-gray-400 shadow-sm"
+          >
+            <p class="animate-pulse">데이터를 조회 중입니다...</p>
+          </div>
+
+          <EmptyResult v-else-if="hasSearched && (!priceResult || priceResult.length === 0)" />
+
+          <template v-else>
+            <ResultGraph :chartData="formattedChartData" />
+            <ResultTable
+              :paginatedData="paginatedData"
+              :totalPages="totalPages"
+              :currentPage="currentPage"
+              @updatePage="(p) => (currentPage = p)"
+            />
+          </template>
+        </div>
       </div>
     </div>
   </main>
@@ -79,6 +80,7 @@ import DashboardSummary from '@/views/dashboard/components/DashboardSummary.vue'
 import ResultGraph from '@/views/dashboard/components/ResultGraph.vue';
 import ResultTable from '@/views/dashboard/components/ResultTable.vue';
 import FavoriteButton from '@/views/dashboard/components/FavoriteButton.vue';
+import PageHeader from '@/components/layout/PageHeader.vue';
 import EmptyResult from '@/views/dashboard/components/EmptyResult.vue';
 import RecentViewedItems from '@/views/dashboard/components/RecentViewedItems.vue';
 

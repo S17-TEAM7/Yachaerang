@@ -1,7 +1,7 @@
 <template>
   <div
     @click="$emit('click')"
-    class="item-card p-6 rounded-2xl flex flex-col justify-between h-[220px] cursor-pointer animate-fadeIn bg-white border hover:translate-y-[-4px] hover:shadow-lg transition-all"
+    class="item-card p-6 rounded-2xl flex flex-col justify-between h-[220px] cursor-pointer bg-white border hover:translate-y-[-4px] hover:shadow-lg transition-all animate-fadeIn"
     :class="[
       rank === 1
         ? 'border-yellow-400 shadow-sm'
@@ -13,13 +13,13 @@
     ]"
   >
     <div class="flex justify-between items-start">
-      <span class="text-xs font-bold px-2 py-1 rounded w-fit" :class="rankBadgeClass"> {{ rank }}위 </span>
-      <span class="text-sm font-bold" :class="priceColorClass"> {{ arrow }} {{ formattedRate }} </span>
+      <span class="text-xs font-bold px-2 py-1 rounded w-fit" :class="rankBadgeClass">{{ rank }}위</span>
+      <span class="text-sm font-bold" :class="priceColorClass">{{ arrow }} {{ formattedRate }}</span>
     </div>
 
-    <div class="min-w-0">
-      <h3 class="text-xl font-bold text-gray-800 mb-1 truncate">
-        {{ item.productName || item.itemName }}
+    <div class="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
+      <h3 class="text-lg font-extrabold text-gray-900 leading-tight mb-1 break-keep">
+        {{ displayName }}
       </h3>
       <p class="text-sm text-gray-400 font-medium">{{ item.unit || '단위 정보 없음' }}</p>
     </div>
@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 
 const props = defineProps({
   item: Object,
@@ -40,6 +40,26 @@ const props = defineProps({
 });
 
 defineEmits(['click']);
+
+// 실제 데이터 구조 확인을 위한 로깅
+onMounted(() => {
+  console.log('RankItem received item:', props.item);
+  console.log('Item keys:', props.item ? Object.keys(props.item) : 'item is null/undefined');
+});
+
+// 표시할 이름 결정 (API 응답 구조 확인 후 명시적 필드 사용)
+const displayName = computed(() => {
+  // 실제 API 응답 구조: { productName: "...", productCode: "...", unit: "...", ... }
+  const name = props.item?.productName;
+  console.log('computed name:', name);
+
+  if (!name) {
+    console.warn('RankItem: productName이 없습니다. item:', props.item);
+    return '상품명 없음';
+  }
+
+  return name;
+});
 
 const rankBadgeClass = computed(() => {
   if (props.rank === 1) return 'bg-yellow-400 text-white';
