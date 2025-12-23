@@ -4,7 +4,7 @@ import { useToastStore } from '@/stores/toast';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'main', component: () => import('@/views/main/MainPage.vue'), meta: { hideSidebar: true } },
+    { path: '/', name: 'main', component: () => import('@/views/rank/Rank.vue') },
     { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue') },
     {
       path: '/forgot-password',
@@ -28,6 +28,12 @@ const router = createRouter({
       name: 'ai-chat',
       component: () => import('@/views/ai/Chatbot.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/about',
+      name: 'about',
+      component: () => import('@/views/main/MainPage.vue'),
+      meta: { hideSidebar: true },
     },
     {
       path: '/mypage',

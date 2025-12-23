@@ -19,8 +19,8 @@
         </router-link>
       </div>
 
-      <div class="mt-auto pt-4 border-t border-gray-100">
-        <router-link to="/" custom v-slot="{ navigate, isActive }">
+      <div class="mt-auto pt-4">
+        <router-link to="/about" custom v-slot="{ navigate, isActive }">
           <div
             @click="navigate"
             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer"
