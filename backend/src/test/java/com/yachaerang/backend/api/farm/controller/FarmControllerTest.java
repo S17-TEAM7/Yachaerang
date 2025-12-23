@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.test.web.servlet.MvcResult;
-import org.stringtemplate.v4.ST;
 
 import java.util.concurrent.CompletableFuture;
 

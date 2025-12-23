@@ -1,11 +1,7 @@
 package com.yachaerang.backend.global.config;
 
-import com.yachaerang.backend.api.common.MemberStatus;
-import com.yachaerang.backend.api.common.PeriodType;
-import com.yachaerang.backend.api.common.Role;
-import com.yachaerang.backend.global.util.MemberStatusTypeHandler;
-import com.yachaerang.backend.global.util.PeriodTypeHandler;
-import com.yachaerang.backend.global.util.RoleTypeHandler;
+import com.yachaerang.backend.api.common.*;
+import com.yachaerang.backend.global.util.*;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -32,6 +28,8 @@ public class MyBatisConfig {
         registry.register(MemberStatus.class, new MemberStatusTypeHandler());
         registry.register(Role.class, new RoleTypeHandler());
         registry.register(PeriodType.class, new PeriodTypeHandler());
+        registry.register(SenderRole.class, new SenderRoleHandler());
+        registry.register(ReactionType.class, new ReactionTypeHandler());
 
         sqlSessionFactoryBean.setConfiguration(configuration);
 

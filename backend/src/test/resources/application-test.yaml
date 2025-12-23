@@ -1,0 +1,91 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: "backend"
+  config:
+    activate:
+      on-profile: "test"
+
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  flyway:
+    enabled: false
+
+  sql:
+    init:
+      mode: never
+      encoding: UTF-8
+
+  jwt:
+    secret: "testSecretKeyForJwtTokenTestingPurpose123456"
+    access:
+      expiration: 86400      # 24시간 (24 * 60 * 60 초)
+    refresh:
+      expiration: 604800     # 7일 (7 * 24 * 60 * 60 초)
+
+  ai:
+    vertex:
+      ai:
+        enabled: false
+    google:
+      genai:
+        enabled: false
+    custom:
+      google:
+        genai:
+          api-key: "gmsSecretKey"
+          model: gemini-2.5-flash-lite
+    openai:
+      api-key: "gmsSecretKey"
+      base-url: https://gms.ssafy.io/gmsapi/api.openai.com
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: "test@test.com"
+    password: "testpassword"
+    protocol: smtp
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            protocols: TLSv1.2 TLSv1.3
+          starttls:
+            enable: true
+            required: true
+        debug: true
+
+  data:
+    redis:
+      host: "host"
+      port: 6379
+      password: "password"
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  type-handlers-package: com.yachaerang.backend.global.util
+
+cloud:
+  aws:
+    region:
+      static: "region"
+    s3:
+      bucket: "bucket-name"
+    stack:
+      auto: false
+    credentials:
+      access-key: "accessKey"
+      secret-key: "secretKey"
+
+external:
+  default-image: "default.png"
+

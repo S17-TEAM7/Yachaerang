@@ -1,6 +1,7 @@
 package com.yachaerang.backend.global.response;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
 
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public enum ErrorCode implements BaseCode{
     EMPTY_MYPAGE_REQUEST(HttpStatus.BAD_REQUEST, "MEMBER_003", "유효한 변경사항 요청이 없습니다."),
     MEMBER_PROFILE_IMAGE(HttpStatus.INTERNAL_SERVER_ERROR, "MEMBER_004", "회원 이미지를 DB에 저장 중 오류가 발생했습니다."),
     MEMBER_PASSWORD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "MEMBER_005", "비밀번호 초기화 저장 중 오류가 발생했습니다."),
+    PROFILE_IMAGE_TOO_MUCH(HttpStatus.BAD_REQUEST, "MEMBER_006", "프로필 이미지의 용량이 너무 큽니다."),
 
     // login
     UNMATCHED_PASSWORD(HttpStatus.BAD_REQUEST, "LOGIN_001", "잘못된 비밀번호입니다."),
@@ -92,6 +94,16 @@ public enum ErrorCode implements BaseCode{
     INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "MAIL_001", "인증코드가 만료되었거나 존재하지 않습니다."),
     UNMATCHED_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "MAIL_002", "인증 코드가 일치하지 않습니다."),
     MAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_003", "메일 전송에 실패하였습니다."),
+
+    // bookmark
+    ALREADY_BOOKMARKED(HttpStatus.BAD_REQUEST, "BOOKMARK_001", "이미 북마크에 등록해두었습니다."),
+    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKMARK_002", "북마크를 조회할 수 없습니다."),
+    BOOKMARK_DB_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "BOOKMARK_003", "북마크 DB 실행이 유효하지 않습니다."),
+
+    // reaction
+    REACTION_ALREADY(HttpStatus.ALREADY_REPORTED, "REACTION_001", "이미 반응을 달았습니다."),
+    REACTION_DB_FAILED(HttpStatus.BAD_REQUEST, "REACTION_002", "리액션을 저장하는 데에 실패하였습니다."),
+    REACTION_NOT_FOUND(HttpStatus.NOT_FOUND, "REACTION_003", "저장된 리액션 조회가 불가능합니다."),
 
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500ERROR", "서버에서 장애가 일어났습니다."),

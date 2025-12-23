@@ -40,4 +40,3 @@ out/
 # mac
 .DS_Store
 .env
-application-test.yaml

@@ -89,6 +89,8 @@ public class MemberService {
     public void uploadProfileImage(MultipartFile file) {
         Long memberId = authenticatedMemberProvider.getCurrentMemberId();
 
+        // TODO: 용량이 너무 많으면 예외처리 던지기
+
         String oldImageUrl = memberMapper.findImageUrl(memberId);
 
         // 새로 저장할 이름

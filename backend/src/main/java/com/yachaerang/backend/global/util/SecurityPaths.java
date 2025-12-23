@@ -28,7 +28,8 @@ public final class SecurityPaths {
             "/api/v1/auth/reissue",
             "/api/v1/members/**",
             "/api/v1/favorites/**",
-            "/api/v1/chat/**"
+            "/api/v1/chat/**",
+            "/api/v1/bookmarks/**",
     };
 
     /**

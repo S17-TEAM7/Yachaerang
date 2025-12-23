@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yachaerang.backend.api.bookmark.repository.BookmarkMapper">
+    <resultMap id="bookmarkResultMap"
+               type="com.yachaerang.backend.api.bookmark.entity.Bookmark">
+        <id property="bookmarkId" column="bookmark_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="articleId" column="article_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- Article ResultMap -->
+    <resultMap id="articleResultMap" type="com.yachaerang.backend.api.article.entity.Article">
+        <id property="id" column="article_id"/>
+        <result property="title" column="title"/>
+        <result property="url" column="url"/>
+        <collection property="tagList" ofType="com.yachaerang.backend.api.article.entity.Tag">
+            <id property="id" column="tag_id"/>
+            <result property="name" column="tag_name"/>
+            <result property="articleId" column="article_id"/>
+        </collection>
+    </resultMap>
+
+    <!-- ArticleBookmark ResultMap -->
+    <resultMap id="articleBookmarkResultMap"
+               type="com.yachaerang.backend.api.bookmark.vo.ArticleBookmark">
+        <id property="bookmarkId" column="bookmark_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="articleId" column="article_id"/>
+        <association property="article" resultMap="articleResultMap"/>
+    </resultMap>
+
+    <!-- save -->
+    <insert id="save"
+            parameterType="com.yachaerang.backend.api.bookmark.entity.Bookmark"
+            useGeneratedKeys="true"
+            keyProperty="bookmarkId">
+        INSERT INTO bookmark (member_id, article_id)
+        VALUES (#{memberId}, #{articleId})
+    </insert>
+
+    <!-- delete -->
+    <delete id="delete">
+        DELETE FROM bookmark
+        WHERE member_id = #{memberId}
+        AND article_id = #{articleId}
+    </delete>
+
+    <!-- findByMemberIdAndArticleId -->
+    <select id="findByMemberIdAndArticleId" resultMap="bookmarkResultMap">
+        SELECT bookmark_id, member_id, article_id, created_at, updated_at
+        FROM bookmark
+        WHERE member_id = #{memberId}
+          AND article_id = #{articleId}
+    </select>
+
+    <!-- findAllByMemberId -->
+    <select id="findAllByMemberId" resultMap="articleBookmarkResultMap">
+        SELECT
+            b.bookmark_id,
+            b.member_id,
+            b.article_id,
+            a.article_id AS article_id,
+            a.title,
+            a.image_url,
+            a.url,
+            t.tag_id AS tag_id,
+            t.name AS tag_name
+        FROM bookmark b
+        INNER JOIN article a ON b.article_id = a.article_id
+        LEFT JOIN tag t ON a.article_id = t.article_id
+        WHERE b.member_id = #{memberId}
+        ORDER BY b.created_at, t.tag_id
+    </select>
+</mapper>
