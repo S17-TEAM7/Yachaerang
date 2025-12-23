@@ -86,6 +86,7 @@ import { getMyProfile, updateProfile, uploadProfileImage } from '@/api/member';
 import IconEdit from '@/components/icons/IconEdit.vue';
 import ConfirmModal from '@/components/modal/ConfirmModal.vue';
 import { useToastStore } from '@/stores/toast';
+import { tokenStorage } from '@/utils/storage';
 
 const toastStore = useToastStore();
 
@@ -179,7 +180,19 @@ const handleFileChange = async (event) => {
     await uploadProfileImage(file);
     const { data } = await getMyProfile();
     if (data.success) {
-      form.imageUrl = data.data.imageUrl || '';
+      const serverData = data.data;
+      form.imageUrl = serverData.imageUrl || '';
+      
+      // localStorage의 user 정보 업데이트
+      const currentUser = tokenStorage.getUser();
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
+          imageUrl: serverData.imageUrl,
+        };
+        tokenStorage.setUser(updatedUser);
+      }
+      
       toastStore.show('프로필 이미지가 변경되었습니다.', 'success');
     }
   } catch (e) {
@@ -234,14 +247,51 @@ const handleSubmit = async () => {
 
     // 성공 여부 체크 (API 응답 구조에 따라 수정 필요)
     if (response) {
+      // 서버에서 최신 정보를 다시 가져와서 localStorage에 저장
+      try {
+        const { data } = await getMyProfile();
+        if (data && data.success) {
+          const serverData = data.data;
+          
+          // localStorage의 user 정보 업데이트
+          const currentUser = tokenStorage.getUser();
+          if (currentUser) {
+            const updatedUser = {
+              ...currentUser,
+              name: serverData.name,
+              nickname: serverData.nickname,
+              imageUrl: serverData.imageUrl,
+              email: serverData.email,
+            };
+            tokenStorage.setUser(updatedUser);
+          } else {
+            // user 정보가 없으면 새로 생성
+            tokenStorage.setUser({
+              email: serverData.email,
+              name: serverData.name,
+              nickname: serverData.nickname,
+              imageUrl: serverData.imageUrl,
+            });
+          }
+          
+          // 폼 데이터도 업데이트
+          form.name = serverData.name;
+          form.nickname = serverData.nickname;
+          form.imageUrl = serverData.imageUrl;
+        }
+      } catch (profileError) {
+        console.error('최신 프로필 정보 가져오기 실패:', profileError);
+        // 프로필 정보 가져오기 실패해도 수정은 완료된 것으로 처리
+      }
+      
       originalForm.name = form.name;
       originalForm.nickname = form.nickname;
       isEditing.value = false;
-      alert('프로필이 수정되었습니다.');
+      toastStore.show('프로필이 수정되었습니다.', 'success');
     }
   } catch (e) {
     console.error(e);
-    alert('프로필 수정 중 오류가 발생했습니다.');
+    toastStore.show('프로필 수정 중 오류가 발생했습니다.', 'error');
   }
 };
 </script>
