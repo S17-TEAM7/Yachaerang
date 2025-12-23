@@ -424,10 +424,11 @@ export function usePriceSearch() {
     return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
   };
   const clearRecentSearches = () => {
-    recentItems.value = [];
+    if (!confirm('최근 조회 기록을 모두 삭제하시겠습니까?')) {
+    }
 
+    recentItems.value = [];
     localStorage.removeItem(RECENT_KEY);
-    localStorage.removeItem(SEARCH_STATE_KEY);
   };
 
   const recentItems = ref(loadRecentItems());
