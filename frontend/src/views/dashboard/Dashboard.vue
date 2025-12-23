@@ -5,7 +5,6 @@
         <div class="min-w-0 flex-1">
           <PageHeader title="대시보드" description="전국 주요 시장 상세 시세 분석 데이터" />
         </div>
-        <FavoriteButton @click="handleAddFavorite" />
       </div>
     </div>
 
@@ -31,6 +30,7 @@
             :selectedItemName="selectedItemLabel"
             @updatePeriod="handlePeriodClick"
             @search="triggerSearch"
+            @add-favorite="handleAddFavorite"
           />
 
           <RecentViewedItems :items="recentItems" @select="handleRecentSelect" @clear="clearRecentSearches" />
