@@ -2,15 +2,19 @@
   <div class="flex h-screen overflow-hidden flex-col" :class="$route.meta.hideSidebar">
     <div class="flex flex-1 overflow-hidden">
       <SideBar v-if="!$route.meta.hideSidebar" />
-      <main class="flex-1 overflow-y-auto flex flex-col" :class="{ 'w-full': $route.meta.hideSidebar }">
-        <div class="flex-1 min-h-0">
+
+      <main class="flex-1 overflow-y-auto flex flex-col bg-gray-50" :class="{ 'w-full': $route.meta.hideSidebar }">
+        <div class="flex-1">
           <RouterView />
         </div>
+
+        <footer v-if="!$route.meta.hideFooter" class="mt-20 border-t border-gray-200 bg-white">
+          <Footer />
+        </footer>
       </main>
     </div>
   </div>
 
-  <!-- Toast -->
   <div v-if="toast.visible" class="toast" :class="toast.type">
     {{ toast.message }}
   </div>

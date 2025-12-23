@@ -27,13 +27,13 @@ const router = createRouter({
       path: '/ai-chat',
       name: 'ai-chat',
       component: () => import('@/views/ai/Chatbot.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, hideFooter: true },
     },
     {
       path: '/about',
       name: 'about',
       component: () => import('@/views/main/MainPage.vue'),
-      meta: { hideSidebar: true },
+      meta: { hideSidebar: true, hideFooter: true },
     },
     {
       path: '/mypage',
