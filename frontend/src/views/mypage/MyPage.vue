@@ -1,6 +1,6 @@
 <template>
   <main class="flex-1 overflow-y-auto bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
+    <div v-if="!isPasswordPage" class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
       <PageHeader title="마이페이지" description="나의 정보를 관리해보세요." />
     </div>
 
@@ -38,4 +38,5 @@ import PageHeader from '@/components/layout/PageHeader.vue';
 const route = useRoute();
 
 const isChildRoute = computed(() => route.path !== '/mypage');
+const isPasswordPage = computed(() => route.path === '/mypage/password');
 </script>
