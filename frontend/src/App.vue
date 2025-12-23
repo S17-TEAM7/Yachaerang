@@ -18,17 +18,27 @@
   <div v-if="toast.visible" class="toast" :class="toast.type">
     {{ toast.message }}
   </div>
+
+  <AlertModal
+    :show="alert.show"
+    :title="alert.title"
+    :message="alert.message"
+    @confirm="alert.handleConfirm"
+  />
 </template>
 
 <script setup>
 import { onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
+import { useAlertStore } from '@/stores/alert';
 import SideBar from '@/components/layout/SideBar.vue';
 import Footer from '@/components/layout/Footer.vue';
+import AlertModal from '@/components/modal/AlertModal.vue';
 
 const { checkAuth } = useAuthStore();
 const toast = useToastStore();
+const alert = useAlertStore();
 
 onMounted(() => {
   checkAuth();
