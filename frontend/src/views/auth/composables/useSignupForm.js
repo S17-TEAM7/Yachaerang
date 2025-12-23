@@ -1,9 +1,11 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { sendEmailCodeApi, verifyEmailCodeApi, signupApi } from '@/api/auth';
+import { useToastStore } from '@/stores/toast';
 
 export function useSignupForm() {
   const router = useRouter();
+  const toastStore = useToastStore();
 
   const email = ref('');
   const password = ref('');
@@ -17,7 +19,7 @@ export function useSignupForm() {
 
   const sendEmailCode = async () => {
     if (!email.value) {
-      alert('이메일을 입력해주세요.');
+      toastStore.show('이메일을 입력해주세요.', 'warning');
       return;
     }
     try {
@@ -25,20 +27,20 @@ export function useSignupForm() {
         mail: email.value,
       });
       emailSent.value = true;
-      alert('입력하신 이메일로 인증번호를 발송했습니다.');
+      toastStore.show('입력하신 이메일로 인증번호를 발송했습니다.', 'success');
     } catch (error) {
       const errorCode = error.response?.data?.code;
       if (errorCode === 'MEMBER_002') {
-        alert('이미 가입된 이메일입니다.');
+        toastStore.show('이미 가입된 이메일입니다.', 'error');
       } else {
-        alert(error.response?.data?.message || '이메일 인증번호 발송 중 오류가 발생했습니다.');
+        toastStore.show(error.response?.data?.message || '이메일 인증번호 발송 중 오류가 발생했습니다.', 'error');
       }
     }
   };
 
   const verifyEmailCode = async () => {
     if (!emailCode.value) {
-      alert('인증번호를 입력해주세요.');
+      toastStore.show('인증번호를 입력해주세요.', 'warning');
       return;
     }
 
@@ -50,13 +52,13 @@ export function useSignupForm() {
 
       if (data?.data === true) {
         emailVerified.value = true;
-        alert('이메일 인증이 완료되었습니다.');
+        toastStore.show('이메일 인증이 완료되었습니다.', 'success');
       } else {
-        alert('인증번호가 올바르지 않습니다.');
+        toastStore.show('인증번호가 올바르지 않습니다.', 'error');
       }
     } catch (error) {
       console.error('이메일 인증 중 오류:', error);
-      alert(error.response?.data?.message || '이메일 인증 중 오류가 발생했습니다.');
+      toastStore.show(error.response?.data?.message || '이메일 인증 중 오류가 발생했습니다.', 'error');
     }
   };
 
@@ -72,7 +74,7 @@ export function useSignupForm() {
 
   const handleSignup = async () => {
     if (!emailVerified.value) {
-      alert('이메일 인증을 완료해주세요.');
+      toastStore.show('이메일 인증을 완료해주세요.', 'warning');
       return;
     }
     try {
@@ -82,14 +84,14 @@ export function useSignupForm() {
         name: name.value,
         nickname: nickname.value,
       });
-      alert('회원가입이 완료되었습니다.');
+      toastStore.show('회원가입이 완료되었습니다.', 'success');
       router.push({ name: 'login' });
     } catch (error) {
       const errorCode = error.response?.data?.code;
       if (errorCode === 'MEMBER_002') {
-        alert('이미 가입된 이메일입니다.');
+        toastStore.show('이미 가입된 이메일입니다.', 'error');
       } else {
-        alert(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.');
+        toastStore.show(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.', 'error');
       }
     }
   };

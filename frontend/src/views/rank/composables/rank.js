@@ -3,9 +3,11 @@ import { useRouter } from 'vue-router';
 import { fetchFavorites, removeFavorite } from '@/api/favorite';
 import { fetchItemsApi, fetchSubItemsApi, fetchHighPriceRank, fetchLowPriceRank } from '@/api/price';
 import { tokenStorage } from '@/utils/storage';
+import { useToastStore } from '@/stores/toast';
 
 export function rank() {
   const router = useRouter();
+  const toastStore = useToastStore();
   const activeTab = ref('top');
 
   const topItems = ref([]);
@@ -157,7 +159,8 @@ export function rank() {
       await removeFavorite(favoriteId);
       await loadFavorites();
     } catch (error) {
-      alert('삭제 중 오류가 발생했습니다.');
+      toastStore.show('삭제 중 오류가 발생했습니다.', 'error');
+      console.error('삭제 중 오류가 발생했습니다:', error);
     }
   }
 
