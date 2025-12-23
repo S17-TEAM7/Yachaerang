@@ -1,10 +1,5 @@
 <template>
-  <main class="flex-1 overflow-y-auto">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
-      <PageHeader title="나의 농장" description="농장 정보를 확인하고 AI 기반 운영 등급과 조언을 받아보세요" />
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full pt-4 pb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full pt-4 pb-8">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- 농장 정보 카드 -->
       <div v-if="farm" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
@@ -193,11 +188,9 @@
       </div>
       </div>
     </div>
-  </main>
 </template>
 
 <script setup>
-import PageHeader from '@/components/layout/PageHeader.vue';
 
 defineProps({
   farm: {
