@@ -29,7 +29,8 @@ jacoco {
 
 repositories {
     mavenCentral()
-    maven {url 'https://repo.spring.io/milestone'}
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencyManagement {
@@ -56,6 +57,7 @@ dependencies {
 
     // Asciidoctor
     implementation 'org.springframework.restdocs:spring-restdocs-asciidoctor:3.0.1'
+    implementation 'org.asciidoctor:asciidoctorj:2.5.13'
 
     // MySQL
     implementation 'mysql:mysql-connector-java:8.0.33'
@@ -79,7 +81,7 @@ dependencies {
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-redis'
     // H2
     testImplementation 'com.h2database:h2'
 
@@ -87,7 +89,13 @@ dependencies {
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
     // Spring AI
+    implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+
+    // Google GenAI
     implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+    implementation 'org.springframework.ai:spring-ai-google-genai-spring-boot-starter'
+
+    // OpenAI
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
     // WebFlux
