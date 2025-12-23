@@ -1,6 +1,6 @@
 <template>
   <main class="min-h-screen bg-gray-50 pb-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
+    <div class="max-w-9xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
       <div class="flex justify-between items-center gap-4">
         <div class="min-w-0 flex-1">
           <PageHeader title="대시보드" description="전국 주요 시장 상세 시세 분석 데이터" />
