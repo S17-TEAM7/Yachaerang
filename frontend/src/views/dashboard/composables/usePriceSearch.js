@@ -23,6 +23,7 @@ export function usePriceSearch() {
   const lastYearPrices = ref([]);
   const hasSearched = ref(false);
   const suppressVarietyReset = ref(false);
+  const isLoading = ref(false);
 
   const periodType = ref('year');
   const periodTabs = [
@@ -172,18 +173,9 @@ export function usePriceSearch() {
 
   const handlePeriodClick = (type) => {
     periodType.value = type;
-
-    // 기간 변경 시 날짜 관련 상태 모두 초기화
-    dayStartDate.value = null;
-    dayEndDate.value = null;
-    weekStartDate.value = null;
-    weekEndDate.value = null;
-    monthStartDate.value = null;
-    monthEndDate.value = null;
-    yearStart.value = '';
-    yearEnd.value = '';
-    yearDetail.value = '';
-    isYearDetail.value = false;
+    // 기간 변경 시 날짜는 localStorage에 저장된 값을 유지하도록 변경
+    // (새로고침 시에도 날짜가 유지되도록 하기 위함)
+    // 날짜 초기화는 하지 않음
   };
 
   /* ================= 즐겨찾기 등록 ================= */
@@ -566,6 +558,7 @@ export function usePriceSearch() {
 
     // 검색 시마다 전년 데이터 초기화
     lastYearPrices.value = [];
+    isLoading.value = true;
 
     try {
       if (periodType.value === 'day') {
@@ -784,6 +777,8 @@ export function usePriceSearch() {
       }
 
       toastStore.show('가격 정보를 가져오는 중 오류가 발생했습니다', 'error');
+    } finally {
+      isLoading.value = false;
     }
 
     console.log('최종 priceResult', priceResult.value);
@@ -813,6 +808,7 @@ export function usePriceSearch() {
     yearDetail,
     hasSearched,
     recentItems,
+    isLoading,
 
     handlePeriodClick,
     resetFilters,
