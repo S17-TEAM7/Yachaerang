@@ -1,18 +1,14 @@
 <template>
   <main class="flex-1 overflow-y-auto bg-gray-50">
-    <div v-if="!isPasswordPage" class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
+    <div v-if="!isPasswordPage" class="max-w-4xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
       <PageHeader title="마이페이지" description="나의 정보를 관리해보세요." />
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full space-y-6">
-
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 w-full space-y-6">
       <router-view v-if="isChildRoute" />
 
       <template v-else>
-        <ProfileSection
-          :profile="profile"
-          @update:profile="handleProfileUpdate"
-        />
+        <ProfileSection :profile="profile" @update:profile="handleProfileUpdate" />
 
         <AccountActions />
 
