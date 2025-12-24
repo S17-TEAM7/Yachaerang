@@ -6,8 +6,13 @@
           <IconChevronLeft class="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
           목록으로
         </button>
-        <button type="button" @click="handleToggleBookmark" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <IconBookmark :active="article.bookmarked" class="w-6 h-6" />
+        <button 
+          type="button" 
+          @click="handleToggleBookmark" 
+          :disabled="isBookmarkLoading"
+          class="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+        >
+          <IconBookmark :active="isBookmarked" class="w-6 h-6" />
         </button>
       </div>
     </nav>
@@ -62,9 +67,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { fetchArticleDetail } from "@/api/article";
+import { fetchArticleDetail, saveBookmark, removeBookmark } from "@/api/article";
+import { useToastStore } from '@/stores/toast';
 import { useArticle } from "@/views/article/composables/useArticles";
 import IconChevronLeft from "@/components/icons/IconChevronLeft.vue";
 import IconBookmark from "@/components/icons/IconBookmark.vue";
@@ -72,8 +78,13 @@ import IconCalendar from "@/components/icons/IconCalendar.vue";
 import IconExternalLink from "@/components/icons/IconExternalLink.vue";
 import ArticleReactions from "@/views/article/components/ArticleReactions.vue";
 
+const toastStore = useToastStore();
+
 const router = useRouter();
 const route = useRoute();
+
+const isBookmarked = ref(false);
+const isBookmarkLoading = ref(false);
 
 const myReaction = ref(null);
 const article = ref({
@@ -84,12 +95,20 @@ const article = ref({
   image: "",
   content: [],
   tags: [],
-  bookmarked: false,
+  isBookmarked: false,  // bookmarked -> isBookmarked로 통일
 });
+
+
+watch(
+  () => article.value.isBookmarked,
+  (newVal) => {
+    isBookmarked.value = newVal ?? false;
+  },
+  { immediate: true }
+);
 
 const reactionIcons = { like: "👍", helpful: "💡", suprise: "😲", sad: "🥺", bummer: "💪" };
 const reactionLabels = { like: "좋아요", helpful: "유익해요", suprise: "놀랐어요", sad: "슬퍼요", bummer: "아쉬워요" };
-
 const reactions = ref({
   like: { count: 24 },
   helpful: { count: 12 },
@@ -131,7 +150,7 @@ const loadArticleDetail = async () => {
           .map((p) => p.trim())
           .filter((p) => p.length > 0),
         tags: data.tagList || [],
-        bookmarked: false,
+        isBookmarked: data.isBookmarked,
       };
     }
   } catch (error) {
@@ -139,8 +158,32 @@ const loadArticleDetail = async () => {
   }
 };
 
-const handleToggleBookmark = () => {
-  toggleBookmarkAction(article.value);
+const handleToggleBookmark = async () => {
+  if (isBookmarkLoading.value) return;
+  
+  isBookmarkLoading.value = true;
+  const wasBookmarked = isBookmarked.value;
+  
+  // 낙관적 업데이트
+  isBookmarked.value = !wasBookmarked;
+  
+  try {
+    if (wasBookmarked) {
+      await removeBookmark(article.value.id);
+      toastStore.show('북마크가 해제되었습니다.', 'success');
+    } else {
+      await saveBookmark(article.value.id);
+      toastStore.show('북마크에 저장되었습니다.', 'success');
+    }
+    // 성공 시 article 객체도 동기화
+    article.value.isBookmarked = isBookmarked.value;
+  } catch (error) {
+    isBookmarked.value = wasBookmarked;
+    console.error('북마크 처리 실패:', error);
+    toastStore.show('북마크 처리 중 오류가 발생했습니다.', 'error');
+  } finally {
+    isBookmarkLoading.value = false;
+  }
 };
 
 const handleToggleReaction = (type) => {

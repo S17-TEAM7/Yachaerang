@@ -44,12 +44,16 @@ class DailyPriceServiceTest {
                 DailyPriceResponseDto.RankDto.builder()
                         .productCode("WATERMELON")
                         .productName("수박")
+                        .itemName("과일")
+                        .kindName("수박")
                         .unit("개")
                         .price(20000L)
                         .build(),
                 DailyPriceResponseDto.RankDto.builder()
                         .productCode("GRAPE")
                         .productName("포도")
+                        .itemName("과일")
+                        .kindName("포도")
                         .unit("kg")
                         .price(15000L)
                         .build());
@@ -60,12 +64,16 @@ class DailyPriceServiceTest {
                 DailyPriceResponseDto.RankDto.builder()
                         .productCode("ORANGE")
                         .productName("감귤")
+                        .itemName("과일")
+                        .kindName("감귤")
                         .unit("kg")
                         .price(2000L)
                         .build(),
                 DailyPriceResponseDto.RankDto.builder()
                         .productCode("PLUM")
                         .productName("자두")
+                        .itemName("과일")
+                        .kindName("자두")
                         .unit("kg")
                         .price(4000L)
                         .build());

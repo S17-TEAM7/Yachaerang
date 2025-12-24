@@ -74,4 +74,21 @@
         WHERE b.member_id = #{memberId}
         ORDER BY b.created_at, t.tag_id
     </select>
+
+    <!-- findArticleIdByMemberId -->
+    <select id="findArticleIdByMemberId" resultType="java.lang.Long">
+        SELECT article_id
+        FROM bookmark
+        WHERE member_id = #{memberId}
+    </select>
+
+    <!-- findExistingByMemberIdAndArticleId -->
+    <select id="findExistingByMemberIdAndArticleId" resultType="Boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM bookmark
+            WHERE member_id = #{memberId}
+              AND article_id = #{articleId}
+        )
+    </select>
 </mapper>

@@ -23,3 +23,8 @@ export const verifyEmailCodeApi = (payload) => {
 export const sendPasswordResetCodeApi = (payload) => {
   return publicClient.post('/api/v1/mails/password/send-code', payload);
 };
+
+// 비밀번호 재설정 (인증 코드 확인 및 임시 비밀번호 발송)
+export const resetPasswordApi = (payload) => {
+  return publicClient.post('/api/v1/mails/password/reset', payload);
+};

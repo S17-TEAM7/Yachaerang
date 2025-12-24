@@ -40,7 +40,7 @@
                 id="location"
                 v-model="formData.location"
                 type="text"
-                placeholder="예: 경기도 양평군"
+                placeholder="예: 충남 논산의 평지"
                 class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#F44323] focus:outline-none focus:ring-2 focus:ring-[#F44323]/20"
               />
             </div>
@@ -52,7 +52,7 @@
                 id="mainCrop"
                 v-model="formData.mainCrop"
                 type="text"
-                placeholder="예: 토마토"
+                placeholder="예: 딸기, 토마토"
                 class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#F44323] focus:outline-none focus:ring-2 focus:ring-[#F44323]/20"
               />
             </div>

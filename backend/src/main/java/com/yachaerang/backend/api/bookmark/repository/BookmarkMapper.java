@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 @Mapper
 public interface BookmarkMapper {
@@ -36,4 +37,17 @@ public interface BookmarkMapper {
      * @return
      */
     List<ArticleBookmark> findAllByMemberId(@Param("memberId") Long memberId);
+
+    /**
+     * memberId를 기반으로 전체 Bookmark의 article_id를 조회
+     */
+    Set<Long> findArticleIdByMemberId(@Param("memberId") Long memberId);
+
+    /**
+     * memberId와 articleId를 기반으로 북마크했는지 확인
+     */
+    Boolean findExistingByMemberIdAndArticleId(
+            @Param("memberId") Long memberId,
+            @Param("articleId") Long articleId
+    );
 }

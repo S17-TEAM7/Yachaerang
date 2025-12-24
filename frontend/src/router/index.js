@@ -4,10 +4,13 @@ import { useToastStore } from '@/stores/toast';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/main', name: 'main', redirect: { name: 'dashboard' } },
-    { path: '/about', name: 'about', component: () => import('@/views/main/MainPage.vue'), meta: {hideSidebar: true} },
+    { path: '/', name: 'main', component: () => import('@/views/rank/Rank.vue') },
     { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue') },
-    { path: '/forgot-password', name: 'forgot-password', component: () => import('@/views/auth/ForgotPasswordView.vue') },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('@/views/auth/ForgotPasswordView.vue'),
+    },
     { path: '/signup', name: 'signup', component: () => import('@/views/auth/SignupView.vue') },
 
     { path: '/rank', name: 'rank', component: () => import('@/views/rank/Rank.vue') },
@@ -20,7 +23,18 @@ const router = createRouter({
       component: () => import('@/views/myfarm/MyFarm.vue'),
       meta: { requiresAuth: true },
     },
-    { path: '/ai-chat', name: 'ai-chat', component: () => import('@/views/ai/Chatbot.vue'), meta: { requiresAuth: true } },
+    {
+      path: '/ai-chat',
+      name: 'ai-chat',
+      component: () => import('@/views/ai/Chatbot.vue'),
+      meta: { requiresAuth: true, hideFooter: true },
+    },
+    {
+      path: '/about',
+      name: 'about',
+      component: () => import('@/views/main/MainPage.vue'),
+      meta: { hideSidebar: true, hideFooter: true },
+    },
     {
       path: '/mypage',
       component: () => import('@/views/mypage/MyPage.vue'),

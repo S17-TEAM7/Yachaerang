@@ -1,6 +1,9 @@
 <template>
   <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-200">
-    <h2 class="text-sm md:text-base font-bold text-gray-900 mb-4 font-display">시세 검색</h2>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-sm md:text-base font-bold text-gray-900 font-display">시세 검색</h2>
+      <FavoriteButton @click="$emit('add-favorite')" />
+    </div>
     <div class="space-y-4">
       <div>
         <label class="text-[12px] font-bold text-gray-400 block mb-1.5 uppercase tracking-tighter">품목 선택</label>
@@ -136,6 +139,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import FavoriteButton from './FavoriteButton.vue';
 
 const props = defineProps({
   itemOptions: Array,
@@ -157,7 +161,7 @@ const modelMonthEnd = defineModel('monthEndDate');
 const modelYearStart = defineModel('yearStart');
 const modelYearEnd = defineModel('yearEnd');
 
-const emit = defineEmits(['search', 'updatePeriod']);
+const emit = defineEmits(['search', 'updatePeriod', 'add-favorite']);
 const isModalOpen = ref(false);
 
 // 미래 일자는 선택 불가 (데이터는 어제까지)

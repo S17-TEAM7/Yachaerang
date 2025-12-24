@@ -24,6 +24,8 @@
                type="com.yachaerang.backend.api.product.dto.response.DailyPriceResponseDto$RankDto">
         <result property="productName" column="name" javaType="String"/>
         <result property="productCode" column="product_code" javaType="String"/>
+        <result property="itemName" column="item_name" javaType="String"/>
+        <result property="kindName" column="kind_name" javaType="String"/>
         <result property="unit" column="unit" javaType="String"/>
         <result property="price" column="price" javaType="java.lang.Long"/>
         <result property="priceChange" column="price_change" javaType="java.lang.Long"/>
@@ -53,6 +55,8 @@
         SELECT
             name,
             product_code,
+            item_name,
+            kind_name,
             unit,
             price,
             price_change,
@@ -61,6 +65,8 @@
             SELECT
                 p.name AS name,
                 p.product_code as product_code,
+                p.item_name as item_name,
+                p.kind_name as kind_name,
                 p.unit as unit,
                 dp.price as price,
                 dp.price_date as price_date,
@@ -80,6 +86,8 @@
         SELECT
             name,
             product_code,
+            item_name,
+            kind_name,
             unit,
             price,
             price_change,
@@ -88,6 +96,8 @@
                  SELECT
                      p.name AS name,
                      p.product_code as product_code,
+                     p.item_name as item_name,
+                     p.kind_name as kind_name,
                      p.unit as unit,
                      dp.price as price,
                      dp.price_date as price_date,

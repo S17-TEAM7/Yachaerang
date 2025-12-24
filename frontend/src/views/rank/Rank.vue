@@ -1,13 +1,12 @@
 <template>
   <div class="min-h-screen bg-gray-50 text-[#1f2937] font-sans">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-      <div class="flex flex-wrap lg:flex-nowrap gap-10 items-start">
-        <div class="flex-1 min-w-0 w-full">
-          <header class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">시세 랭킹</h1>
-            <p class="text-gray-500 mt-2 text-lg">어제 시세 기준 상위/하위 품목을 확인하세요.</p>
-          </header>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
+      <PageHeader title="랭킹" description="어제 시세 기준 상위/하위 품목을 확인하세요." />
+    </div>
 
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full">
+      <div class="max-w-[100rem] flex flex-wrap lg:flex-nowrap gap-10 items-start">
+        <div class="flex-1 min-w-0 w-full">
           <div class="flex justify-between items-end mb-8 border-b border-gray-200">
             <nav class="flex gap-4 sm:gap-8">
               <button
@@ -53,6 +52,7 @@
 import { rank } from '@/views/rank/composables/rank';
 import RankItem from './components/RankItem.vue';
 import WatchListAside from './components/WatchListAside.vue';
+import PageHeader from '@/components/layout/PageHeader.vue';
 
 const {
   activeTab,

@@ -36,4 +36,16 @@ public class AuthenticatedMemberProvider {
             throw GeneralException.of(ErrorCode.MEMBER_NOT_FOUND);
         }
     }
+
+    /*
+    Context에 등록된 Member가 있는지 없는지의 여부 확인
+     */
+    public Boolean isAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof UsernamePasswordAuthenticationToken) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

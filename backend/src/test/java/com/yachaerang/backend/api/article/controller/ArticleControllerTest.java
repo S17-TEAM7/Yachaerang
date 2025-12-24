@@ -79,6 +79,7 @@ class ArticleControllerTest extends RestDocsSupport {
                 .imageUrl("default.png")
                 .createdAt(LocalDate.of(2025, 12, 6))
                 .tagList(List.of("태그1", "태그2"))
+                .isBookmarked(false)
                 .build();
 
         listDto2 = ArticleResponseDto.ListDto.builder()
@@ -87,6 +88,7 @@ class ArticleControllerTest extends RestDocsSupport {
                 .imageUrl("default.png")
                 .createdAt(LocalDate.of(2025, 12, 5))
                 .tagList(List.of("태그3"))
+                .isBookmarked(false)
                 .build();
 
         detailDto = ArticleResponseDto.DetailDto.builder()
@@ -97,6 +99,7 @@ class ArticleControllerTest extends RestDocsSupport {
                 .url("http://example.com/1")
                 .tagList(List.of("태그1", "태그2"))
                 .createdAt(LocalDate.of(2025, 12, 6))
+                .isBookmarked(false)
                 .build();
     }
 
@@ -122,14 +125,13 @@ class ArticleControllerTest extends RestDocsSupport {
 
         // when & then
         mockMvc.perform(get("/api/v1/articles")
-                .param("page", "1")
-                .param("size", "5")
-                .accept(MediaType.APPLICATION_JSON))
+                        .param("page", "1")
+                        .param("size", "5")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(doc(
                         "get-all-articles",
                         requestHeaders(),
-                        pathParameters(),
                         queryParameters(
                                 parameterWithName("page").description("페이지 번호 (기본값: 1)"),
                                 parameterWithName("size").description("페이지 크기 (기본값: 5)")
@@ -142,7 +144,8 @@ class ArticleControllerTest extends RestDocsSupport {
                                         fieldWithPath("title").type(STRING).description("기사 제목"),
                                         fieldWithPath("imageUrl").type(STRING).description("이미지 URL"),
                                         fieldWithPath("tagList[]").type(ARRAY).description("태그 목록"),
-                                        fieldWithPath("createdAt").type(STRING).description("작성일")
+                                        fieldWithPath("createdAt").type(STRING).description("작성일"),
+                                        fieldWithPath("isBookmarked").type(BOOLEAN).description("북마크 여부")
                                 )
                 ));
     }
@@ -155,7 +158,8 @@ class ArticleControllerTest extends RestDocsSupport {
         given(articleService.getArticle(articleId)).willReturn(detailDto);
 
         // when & then
-        mockMvc.perform(get("/api/v1/articles/{articleId}", articleId))
+        mockMvc.perform(get("/api/v1/articles/{articleId}", articleId)
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(doc(
                         "get-article",
@@ -163,7 +167,6 @@ class ArticleControllerTest extends RestDocsSupport {
                         pathParameters(
                                 parameterWithName("articleId").description("기사 ID")
                         ),
-                        queryParameters(),
                         responseFields(ENVELOPE_COMMON)
                                 .and(fieldWithPath("data").type(OBJECT).description("응답 데이터"))
                                 .andWithPrefix("data.",
@@ -173,8 +176,10 @@ class ArticleControllerTest extends RestDocsSupport {
                                         fieldWithPath("imageUrl").type(STRING).description("이미지 URL"),
                                         fieldWithPath("url").type(STRING).description("원본 URL"),
                                         fieldWithPath("tagList[]").type(ARRAY).description("태그 목록"),
-                                        fieldWithPath("createdAt").type(STRING).description("작성일")
-                )));
+                                        fieldWithPath("createdAt").type(STRING).description("작성일"),
+                                        fieldWithPath("isBookmarked").type(BOOLEAN).description("북마크 여부")
+                                )
+                ));
     }
 
     @Test
@@ -208,7 +213,6 @@ class ArticleControllerTest extends RestDocsSupport {
                 .andDo(doc(
                         "search-articles",
                         requestHeaders(),
-                        pathParameters(),
                         queryParameters(
                                 parameterWithName("page").description("페이지 번호 (기본값: 1)"),
                                 parameterWithName("size").description("페이지 크기 (기본값: 5)"),
@@ -222,7 +226,8 @@ class ArticleControllerTest extends RestDocsSupport {
                                         fieldWithPath("title").type(STRING).description("기사 제목"),
                                         fieldWithPath("imageUrl").type(STRING).description("이미지 URL"),
                                         fieldWithPath("tagList[]").type(ARRAY).description("태그 목록"),
-                                        fieldWithPath("createdAt").type(STRING).description("작성일")
+                                        fieldWithPath("createdAt").type(STRING).description("작성일"),
+                                        fieldWithPath("isBookmarked").type(BOOLEAN).description("북마크 여부")
                                 )
                 ));
     }

@@ -1,5 +1,5 @@
 <template>
-  <aside class="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 lg:pt-[116px] transition-all">
+  <aside class="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 transition-all">
     <div class="bg-white border border-gray-300 rounded-2xl p-6 sm:p-7 shadow-sm mb-6">
       <div class="flex justify-between items-center mb-8">
         <h2 class="text-xl font-bold text-gray-900">나의 품목정보</h2>

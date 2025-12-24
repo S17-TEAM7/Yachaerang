@@ -73,6 +73,8 @@ class DailyPriceControllerTest extends RestDocsSupport {
                 DailyPriceResponseDto.RankDto.builder()
                         .productName("수박(1개) - 상품")
                         .productCode("WATERMELON")
+                        .itemName("수박")
+                        .kindName("수박(1개) - 상품")
                         .unit("개")
                         .price(20000L)
                         .priceChange(-100L)
@@ -81,6 +83,8 @@ class DailyPriceControllerTest extends RestDocsSupport {
                 DailyPriceResponseDto.RankDto.builder()
                         .productName("포도(1kg) - 중품")
                         .productCode("GRAPE")
+                        .itemName("포도")
+                        .kindName("포도(1kg) - 중품")
                         .unit("kg")
                         .priceChange(100L)
                         .priceChangeRate(BigDecimal.valueOf(3.00))
@@ -89,6 +93,8 @@ class DailyPriceControllerTest extends RestDocsSupport {
                 DailyPriceResponseDto.RankDto.builder()
                         .productName("딸기(1kg) - 상품")
                         .productCode("STRAWBERRY")
+                        .itemName("딸기")
+                        .kindName("딸기(1kg) - 상품")
                         .unit("kg")
                         .priceChange(200L)
                         .priceChangeRate(BigDecimal.valueOf(4.00))
@@ -99,6 +105,8 @@ class DailyPriceControllerTest extends RestDocsSupport {
                 DailyPriceResponseDto.RankDto.builder()
                         .productName("오렌지(10개) - 중품")
                         .productCode("ORANGE")
+                        .itemName("오렌지")
+                        .kindName("오렌지(10개) - 중품")
                         .unit("개")
                         .price(3000L)
                         .priceChange(40L)
@@ -107,6 +115,8 @@ class DailyPriceControllerTest extends RestDocsSupport {
                 DailyPriceResponseDto.RankDto.builder()
                         .productName("자두(1kg) - 상품")
                         .productCode("PLUM")
+                        .itemName("자두")
+                        .kindName("자두(1kg) - 상품")
                         .unit("kg")
                         .price(4000L)
                         .priceChange(-500L)
@@ -115,6 +125,8 @@ class DailyPriceControllerTest extends RestDocsSupport {
                 DailyPriceResponseDto.RankDto.builder()
                         .productName("사과(1kg) - 상품")
                         .productCode("APPLE")
+                        .itemName("사과")
+                        .kindName("사과(1kg) - 상품")
                         .unit("kg")
                         .price(5000L)
                         .priceChange(-500L)
@@ -202,6 +214,8 @@ class DailyPriceControllerTest extends RestDocsSupport {
                                 .andWithPrefix("data[]",
                                         fieldWithPath("productName").type(STRING).description("상품 이름"),
                                         fieldWithPath("productCode").type(STRING).description("상품 코드"),
+                                        fieldWithPath("itemName").type(STRING).description("품목(상위) 이름"),
+                                        fieldWithPath("kindName").type(STRING).description("품목(하위) 이름"),
                                         fieldWithPath("unit").type(STRING).description("단위"),
                                         fieldWithPath("price").type(NUMBER).description("가격"),
                                         fieldWithPath("priceChange").type(NUMBER).description("전일 대비 가격 변화량"),
@@ -229,6 +243,8 @@ class DailyPriceControllerTest extends RestDocsSupport {
                                 .andWithPrefix("data[]",
                                         fieldWithPath("productName").type(STRING).description("상품 이름"),
                                         fieldWithPath("productCode").type(STRING).description("상품 코드"),
+                                        fieldWithPath("itemName").type(STRING).description("품목(상위) 이름"),
+                                        fieldWithPath("kindName").type(STRING).description("품목(하위) 이름"),
                                         fieldWithPath("unit").type(STRING).description("단위"),
                                         fieldWithPath("price").type(NUMBER).description("가격"),
                                         fieldWithPath("priceChange").type(NUMBER).description("전일 대비 가격 변화량"),

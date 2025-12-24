@@ -27,6 +27,8 @@ public class DailyPriceResponseDto {
     public static class RankDto {
         private String productName;
         private String productCode;
+        private String itemName;
+        private String kindName;
         private String unit;
         private Long price;
         private Long priceChange;

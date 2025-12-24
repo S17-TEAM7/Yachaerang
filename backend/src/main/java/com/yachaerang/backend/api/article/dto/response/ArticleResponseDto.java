@@ -58,6 +58,7 @@ public class ArticleResponseDto {
         private String url;
         private List<String> tagList;
         private LocalDate createdAt;
+        private Boolean isBookmarked;
     }
 
     @Getter
@@ -71,5 +72,6 @@ public class ArticleResponseDto {
         private String imageUrl;
         private List<String> tagList;
         private LocalDate createdAt;
+        private Boolean isBookmarked;
     }
 }
