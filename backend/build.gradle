@@ -35,7 +35,7 @@ repositories {
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.ai:spring-ai-bom:1.1.1"
+        mavenBom "org.springframework.ai:spring-ai-bom:1.1.0-M1"
     }
 }
 
@@ -83,6 +83,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation "redis.clients:jedis:5.2.0"
 
+    // Spring AI - Redis Vector Store
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-redis'
 
     // H2
@@ -93,9 +94,6 @@ dependencies {
 
     // Google GenAI
     implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
-
-    // OpenAI
-    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
     // WebFlux
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
