@@ -70,3 +70,8 @@ cloud:
 
 external:
   default-image: ${DEFAULT_IMAGE_URL}
+
+app:
+  vector:
+    dimension: 1536
+    distance-metric: COSINE

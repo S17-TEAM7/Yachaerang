@@ -22,6 +22,7 @@ spring:
       host: ${LOCAL_REDIS_HOST}
       port: 6379
       password: ${LOCAL_REDIS_PASSWORD}
+      client-type: jedis
 
 logging:
   file:

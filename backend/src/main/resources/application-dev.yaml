@@ -13,11 +13,19 @@ spring:
     username: ${DEV_DB_USER}
     password: ${DEV_DB_PASSWORD}
 
+  ai:
+    vectorstore:
+      redis:
+        index: crop-rag-index
+        prefix: "doc:"
+        initialize-schema: true
+
   data:
     redis:
       host: ${DEV_REDIS_HOST}
       port: 6379
       password: ${DEV_REDIS_PASSWORD}
+      client-type: jedis
 
 logging:
   file:
