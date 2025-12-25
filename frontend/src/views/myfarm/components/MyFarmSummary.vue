@@ -6,6 +6,9 @@
         <h2 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
           <span class="w-1 h-6 bg-[#FECC21] rounded-full block"></span>
           농장 정보
+          <span v-if="farm.farmType" class="ml-auto px-3 py-1 text-xs font-bold rounded-full bg-[#F44323]/10 text-[#F44323] border border-[#F44323]/20">
+            {{ farm.farmType }}
+          </span>
         </h2>
 
         <div class="space-y-5">

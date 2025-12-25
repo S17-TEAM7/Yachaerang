@@ -45,6 +45,14 @@
         />
       </div>
     </div>
+
+    <ConfirmModal
+      :show="showRemoveFavoriteConfirm"
+      title="관심 품목 삭제"
+      message="관심 품목에서 삭제하시겠습니까?"
+      @confirm="handleRemoveFavoriteConfirm"
+      @cancel="showRemoveFavoriteConfirm = false"
+    />
   </div>
 </template>
 
@@ -53,6 +61,7 @@ import { rank } from '@/views/rank/composables/rank';
 import RankItem from './components/RankItem.vue';
 import WatchListAside from './components/WatchListAside.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
+import ConfirmModal from '@/components/modal/ConfirmModal.vue';
 
 const {
   activeTab,
@@ -64,6 +73,8 @@ const {
   goFavoriteDetail,
   goRankDetail,
   handleRemoveFavorite,
+  showRemoveFavoriteConfirm,
+  handleRemoveFavoriteConfirm,
 } = rank();
 
 const tabs = [

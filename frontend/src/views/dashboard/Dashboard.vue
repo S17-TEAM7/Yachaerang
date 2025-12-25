@@ -1,5 +1,5 @@
 <template>
-  <main class="min-h-screen bg-gray-50 pb-10">
+  <main class="min-h-screen bg-gray-50 pb-10 text-base">
     <div class="max-w-9xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 w-full">
       <div class="flex justify-between items-center gap-4">
         <div class="min-w-0 flex-1">
@@ -10,7 +10,9 @@
 
     <div class="max-w-9xl mx-auto px-4 sm:px-6 pt-2 w-full">
       <div class="grid grid-cols-12 gap-4 md:gap-6 pt-2">
-        <div class="col-span-12 lg:col-span-3 lg:col-start-10 order-1 lg:order-2 flex flex-col gap-4">
+        <div
+          class="w-full max-w-[320px] col-span-12 lg:col-span-3 lg:col-start-10 order-1 lg:order-2 flex flex-col gap-4"
+        >
           <DashboardFilter
             v-model:selectedItem="selectedItem"
             v-model:selectedVariety="selectedVariety"
@@ -33,7 +35,7 @@
             @add-favorite="handleAddFavorite"
           />
 
-          <RecentViewedItems :items="recentItems" @select="handleRecentSelect" @clear="clearRecentSearches" />
+          <RecentViewedItems :items="recentItems" @select="handleRecentSelect" @clear="handleClearRecent" />
         </div>
 
         <div class="col-span-12 lg:col-span-9 order-2 lg:order-1 flex flex-col gap-4">
@@ -51,23 +53,43 @@
             v-if="!hasSearched"
             class="bg-white p-20 rounded-xl border border-gray-200 text-center text-gray-400 shadow-sm"
           >
-            <p class="animate-pulse">데이터를 조회 중입니다...</p>
+            <p class="text-lg">조회하기 버튼을 클릭하여 데이터를 조회하세요.</p>
           </div>
 
-          <EmptyResult v-else-if="hasSearched && (!priceResult || priceResult.length === 0)" />
-
-          <template v-else>
-            <ResultGraph :chartData="formattedChartData" />
-            <ResultTable
-              :paginatedData="paginatedData"
-              :totalPages="totalPages"
-              :currentPage="currentPage"
-              @updatePage="(p) => (currentPage = p)"
-            />
+          <template v-else-if="hasSearched">
+            <EmptyResult v-if="!priceResult || priceResult.length === 0" />
+            <template v-else>
+              <ResultGraph
+                :chartData="formattedChartData"
+                :periodType="periodType"
+                :priceResult="priceResult"
+                :weekStartDate="weekStartDate"
+                :weekEndDate="weekEndDate"
+                :monthStartDate="monthStartDate"
+                :monthEndDate="monthEndDate"
+                :yearStart="yearStart"
+                :yearEnd="yearEnd"
+              />
+              <ResultTable
+                :paginatedData="paginatedData"
+                :totalPages="totalPages"
+                :currentPage="currentPage"
+                :periodType="periodType"
+                @updatePage="(p) => (currentPage = p)"
+              />
+            </template>
           </template>
         </div>
       </div>
     </div>
+
+    <ConfirmModal
+      :show="showClearConfirm"
+      title="최근 조회 기록 삭제"
+      message="최근 조회 기록을 모두 삭제하시겠습니까?"
+      @confirm="handleClearConfirm"
+      @cancel="showClearConfirm = false"
+    />
   </main>
 </template>
 
@@ -75,14 +97,16 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { usePriceSearch } from '@/views/dashboard/composables/usePriceSearch';
+import { useToastStore } from '@/stores/toast';
 import DashboardFilter from '@/views/dashboard/components/DashboardFilter.vue';
 import DashboardSummary from '@/views/dashboard/components/DashboardSummary.vue';
 import ResultGraph from '@/views/dashboard/components/ResultGraph.vue';
 import ResultTable from '@/views/dashboard/components/ResultTable.vue';
-import FavoriteButton from '@/views/dashboard/components/FavoriteButton.vue';
+
 import PageHeader from '@/components/layout/PageHeader.vue';
 import EmptyResult from '@/views/dashboard/components/EmptyResult.vue';
 import RecentViewedItems from '@/views/dashboard/components/RecentViewedItems.vue';
+import ConfirmModal from '@/components/modal/ConfirmModal.vue';
 
 const {
   selectedItem,
@@ -113,6 +137,7 @@ const {
 } = usePriceSearch();
 
 const route = useRoute();
+const toast = useToastStore();
 
 const selectedItemLabel = computed(() => {
   if (!selectedItem.value) return '품목 선택';
@@ -150,10 +175,22 @@ const normalizedLastYearPrices = computed(() => {
 });
 
 const formattedChartData = computed(() => {
+  // day 모드: 기존 방식 유지
+  if (periodType.value === 'day') {
+    return {
+      labels: priceResult.value.map((item) => item.dateLabel),
+      thisPrices: priceResult.value.map((item) => item.priceLabel),
+      lastPrices: normalizedLastYearPrices.value,
+    };
+  }
+
+  // week/month/year 모드: 집계 데이터 포함
   return {
     labels: priceResult.value.map((item) => item.dateLabel),
     thisPrices: priceResult.value.map((item) => item.priceLabel),
     lastPrices: normalizedLastYearPrices.value,
+    minPrices: priceResult.value.map((item) => item.minPrice ?? null),
+    maxPrices: priceResult.value.map((item) => item.maxPrice ?? null),
   };
 });
 
@@ -171,22 +208,46 @@ const paginatedData = computed(() => {
 
   return priceResult.value.slice(start, end).map((item, index) => {
     const globalIndex = start + index;
-    const thisPrice = item.priceLabel || 0;
+    const thisPrice = item.priceLabel ?? null;
+    const lastPrice = normalizedLastYearPrices.value[globalIndex] ?? null;
 
-    const lastPrice = normalizedLastYearPrices.value[globalIndex] || 0;
+    const hasAggregateFields = item.hasOwnProperty('minPrice') || item.hasOwnProperty('maxPrice');
 
-    const yoyDiff = lastPrice > 0 ? thisPrice - lastPrice : 0;
-    const yoyRate = lastPrice > 0 ? (yoyDiff / lastPrice) * 100 : 0;
+    if (hasAggregateFields && (periodType.value === 'week' || periodType.value === 'month')) {
+      return {
+        date: item.dateLabel,
+        thisPrice,
+        minPrice: item.minPrice ?? null,
+        maxPrice: item.maxPrice ?? null,
+        prevDiff: item.priceChange ?? null,
+        prevRate: item.priceChangeRate ?? null,
+        lastPrice,
+      };
+    } else {
+      // Daily/Yearly format
+      const yoyDiff = thisPrice !== null && lastPrice !== null && lastPrice > 0 ? thisPrice - lastPrice : null;
+      const yoyRate = thisPrice !== null && lastPrice !== null && lastPrice > 0 ? (yoyDiff / lastPrice) * 100 : null;
 
-    return {
-      date: item.dateLabel,
-      thisPrice,
-      prevDiff: item.priceChange ?? 0,
-      prevRate: item.priceChangeRate ?? 0,
-      lastPrice,
-      yoyDiff,
-      yoyRate,
-    };
+      const validPrices = priceResult.value
+        .map((r) => r.priceLabel)
+        .filter((p) => p !== null && p !== undefined && typeof p === 'number');
+      const maxVal = validPrices.length ? Math.max(...validPrices) : null;
+      const minVal = validPrices.length ? Math.min(...validPrices) : null;
+      const isMax = thisPrice === maxVal;
+      const isMin = thisPrice === minVal;
+
+      return {
+        date: item.dateLabel,
+        thisPrice,
+        prevDiff: item.priceChange ?? null,
+        prevRate: item.priceChangeRate ?? null,
+        lastPrice,
+        yoyDiff,
+        yoyRate,
+        isMax,
+        isMin,
+      };
+    }
   });
 });
 
@@ -243,13 +304,12 @@ onMounted(async () => {
     yearStart.value = state.yearStart ?? '';
     yearEnd.value = state.yearEnd ?? '';
 
-    if (state.selectedItem && state.selectedVariety) {
+    if (state.selectedItem && state.selectedVariety && state.hasSearched) {
       await handleSearch();
     }
 
     currentPage.value = state.currentPage || 1;
   } else {
-    // 최초 접속 시 기본값 (계란)
     selectedItem.value = '9903';
     selectedVariety.value = 'KM-9903-23-71';
     periodType.value = 'day';
@@ -257,12 +317,16 @@ onMounted(async () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     dayEndDate.value = yesterday.toISOString().slice(0, 10);
-
-    await handleSearch();
   }
 });
 
 const triggerSearch = async () => {
+  if (periodType.value === 'day') {
+    if (periodType.value === 'day' && dayStartDate.value === dayEndDate.value) {
+      toast.show('일간 조회 시 시작일과 종료일은 같을 수 없습니다.', 'error');
+      return;
+    }
+  }
   currentPage.value = 1;
   await handleSearch();
 };
@@ -270,5 +334,14 @@ const triggerSearch = async () => {
 const handleRecentSelect = async (item) => {
   currentPage.value = 1;
   await applyRecentItem(item);
+};
+
+const showClearConfirm = ref(false);
+const handleClearRecent = () => {
+  showClearConfirm.value = true;
+};
+const handleClearConfirm = () => {
+  clearRecentSearches();
+  showClearConfirm.value = false;
 };
 </script>

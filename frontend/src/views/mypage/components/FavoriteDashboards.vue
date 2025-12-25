@@ -43,6 +43,14 @@
     <div v-else class="py-10 text-center space-y-2">
       <p class="text-sm font-bold text-slate-300">등록한 관심 품목이 없습니다.</p>
     </div>
+
+    <ConfirmModal
+      :show="showRemoveConfirm"
+      title="관심품목 삭제"
+      message="등록한 관심품목에서 삭제하시겠습니까?"
+      @confirm="handleRemoveConfirm"
+      @cancel="showRemoveConfirm = false"
+    />
   </div>
 </template>
 
@@ -54,6 +62,7 @@ import { useProductNameStore } from '@/stores/productNameStore';
 import IconHeart from '@/components/icons/IconHeart.vue';
 import { useToastStore } from '@/stores/toast';
 import LoadingSpinner from '@/components/spinner/LoadingSpinner.vue';
+import ConfirmModal from '@/components/modal/ConfirmModal.vue';
 
 const router = useRouter();
 const productNameStore = useProductNameStore();
@@ -108,25 +117,42 @@ const loadFavorites = async () => {
 };
 
 const goToDetail = (item) => {
+  if (!item.productCode) {
+    toastStore.show('상품 코드가 없습니다.', 'error');
+    return;
+  }
   router.push({
     path: '/dashboard',
     query: {
       productCode: item.productCode,
       periodType: item.periodType,
+      source: 'favorite',
+      t: Date.now(),
     },
   });
 };
 
-const handleRemove = async (favoriteId) => {
-  if (!confirm('등록한 관심품목에서 삭제하시겠습니까?')) return;
+const showRemoveConfirm = ref(false);
+const selectedFavoriteId = ref(null);
+
+const handleRemove = (favoriteId) => {
+  selectedFavoriteId.value = favoriteId;
+  showRemoveConfirm.value = true;
+};
+
+const handleRemoveConfirm = async () => {
+  if (!selectedFavoriteId.value) return;
 
   try {
-    await removeFavorite(favoriteId);
+    await removeFavorite(selectedFavoriteId.value);
     await loadFavorites();
     toastStore.show('등록한 관심품목에서 삭제되었습니다.', 'success');
   } catch (error) {
     console.error('삭제 실패:', error);
     toastStore.show('삭제 중 오류가 발생했습니다.', 'error');
+  } finally {
+    showRemoveConfirm.value = false;
+    selectedFavoriteId.value = null;
   }
 };
 

@@ -4,13 +4,7 @@
       <ChatHeader :title="aiProfile.name" @end-chat="endChat" />
 
       <div ref="scrollContainerRef" class="flex-1 overflow-y-auto" @scroll="handleScroll">
-        <ChatMessageList
-          ref="messageListRef"
-          :messages="displayMessages"
-          :ai-profile="aiProfile"
-          :user-profile="userProfile"
-          :is-loading="isLoading"
-        />
+        <ChatMessageList ref="messageListRef" :messages="displayMessages" :ai-profile="aiProfile" :user-profile="userProfile" :is-loading="isLoading" />
       </div>
 
       <ChatNewMessageButton v-if="showNewMsgBtn" @click="scrollToBottom(true, true)" />
@@ -19,35 +13,39 @@
         <div class="max-w-[1000px] mx-auto px-4">
           <ChatSuggestions v-if="showSuggestions" :items="suggestions" @pick="handleSuggestionClick" />
 
-          <ChatInputBar
-            v-model="userInput"
-            :disabled="isLoading"
-            :placeholder="isLoading ? '야치가 답변을 만드는 중이에요...' : '메시지를 입력하세요...'"
-            @send="handleSend"
-          />
+          <ChatInputBar v-model="userInput" :disabled="isLoading" :placeholder="isLoading ? '야치가 답변을 만드는 중이에요...' : '메시지를 입력하세요...'" @send="handleSend" />
         </div>
       </footer>
     </div>
+
+    <ConfirmModal
+      :show="showEndChatConfirm"
+      title="대화 종료"
+      message="대화를 종료하시겠습니까?"
+      @confirm="handleEndChatConfirm"
+      @cancel="showEndChatConfirm = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue';
-import 'github-markdown-css/github-markdown-light.css';
+import { ref, reactive, computed, onMounted, nextTick, watch } from "vue";
+import "github-markdown-css/github-markdown-light.css";
 
-import ChatHeader from '@/views/ai/components/ChatHeader.vue';
-import ChatMessageList from '@/views/ai/components/ChatMessageList.vue';
-import ChatNewMessageButton from '@/views/ai/components/ChatNewMessageButton.vue';
-import ChatSuggestions from '@/views/ai/components/ChatSuggestions.vue';
-import ChatInputBar from '@/views/ai/components/ChatInputBar.vue';
+import ChatHeader from "@/views/ai/components/ChatHeader.vue";
+import ChatMessageList from "@/views/ai/components/ChatMessageList.vue";
+import ChatNewMessageButton from "@/views/ai/components/ChatNewMessageButton.vue";
+import ChatSuggestions from "@/views/ai/components/ChatSuggestions.vue";
+import ChatInputBar from "@/views/ai/components/ChatInputBar.vue";
+import ConfirmModal from "@/components/modal/ConfirmModal.vue";
 
-import { useChat } from '@/views/ai/composables/useChat';
-import { useUserProfile } from '@/views/ai/composables/useUserProfile';
-import yachiAvatar from '@/assets/yachi.png';
+import { useChat } from "@/views/ai/composables/useChat";
+import { useUserProfile } from "@/views/ai/composables/useUserProfile";
+import yachiAvatar from "@/assets/yachi.gif";
 
 const { displayMessages, sendMessage, resetChat, initSession, isLoading } = useChat();
 
-const userInput = ref('');
+const userInput = ref("");
 const showNewMsgBtn = ref(false);
 const isUserScrolling = ref(false);
 
@@ -55,19 +53,19 @@ const messageListRef = ref(null);
 const scrollContainerRef = ref(null);
 
 const aiProfile = reactive({
-  name: 'AI 야치',
+  name: "AI 야치",
   avatarUrl: yachiAvatar,
 });
 
 const { userProfile, loadUserProfile } = useUserProfile();
 
 const suggestions = [
-  '방울토마토와 같이 심으면 서로 성장을 돕는 동반 식물에는 어떤 게 있어?',
-  '진딧물이 생겼는데 약을 안 쓰고 없애는 방법이 있을까?',
-  '최근 농산물 시장 동향을 요약해줘.',
-  '깻잎 뒷면에 하얀 가루 같은 게 생겼어. 이거 병이야? 친환경적으로 해결할 수 있는 난황유 만드는 법 알려줘.',
+  "방울토마토와 같이 심으면 서로 성장을 돕는 동반 식물에는 어떤 게 있어?",
+  "진딧물이 생겼는데 약을 안 쓰고 없애는 방법이 있을까?",
+  "최근 농산물 시장 동향을 요약해줘.",
+  "깻잎 뒷면에 하얀 가루 같은 게 생겼어. 이거 병이야? 친환경적으로 해결할 수 있는 난황유 만드는 법 알려줘.",
 
-  '감자를 수확할 때가 된 것 같은데, 잎이 어떤 상태일 때 캐야 가장 맛있어?',
+  "감자를 수확할 때가 된 것 같은데, 잎이 어떤 상태일 때 캐야 가장 맛있어?",
 ];
 
 const showSuggestions = computed(() => displayMessages.value && displayMessages.value.length === 1);
@@ -82,7 +80,7 @@ const handleSend = async () => {
   const text = userInput.value.trim();
   if (!text || isLoading.value) return;
 
-  userInput.value = '';
+  userInput.value = "";
   await sendMessage(text);
 
   await nextTick();
@@ -95,13 +93,18 @@ const handleSuggestionClick = async (text) => {
   await handleSend();
 };
 
+const showEndChatConfirm = ref(false);
+
 const endChat = async () => {
-  if (confirm('대화를 종료하시겠습니까?')) {
-    await resetChat();
-    showNewMsgBtn.value = false;
-    await nextTick();
-    scrollToBottom(true);
-  }
+  showEndChatConfirm.value = true;
+};
+
+const handleEndChatConfirm = async () => {
+  await resetChat();
+  showNewMsgBtn.value = false;
+  await nextTick();
+  scrollToBottom(true);
+  showEndChatConfirm.value = false;
 };
 
 const scrollToBottom = (force = false, smooth = false) => {
@@ -112,7 +115,7 @@ const scrollToBottom = (force = false, smooth = false) => {
     if (smooth) {
       container.scrollTo({
         top: container.scrollHeight,
-        behavior: 'smooth',
+        behavior: "smooth",
       });
     } else {
       container.scrollTop = container.scrollHeight;

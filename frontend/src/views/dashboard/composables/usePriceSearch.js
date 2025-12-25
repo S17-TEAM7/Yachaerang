@@ -418,10 +418,6 @@ export function usePriceSearch() {
     return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
   };
   const clearRecentSearches = () => {
-    if (!confirm('최근 조회 기록을 모두 삭제하시겠습니까?')) {
-      return;
-    }
-
     recentItems.value = [];
     localStorage.removeItem(RECENT_KEY);
   };
@@ -549,42 +545,37 @@ export function usePriceSearch() {
   /* ================= 일자 변환 함수 ================= */
   const normalizeResult = (rawList, type) => {
     return rawList.map((item) => {
+      const zeroToNull = (val) => (val === 0 || val === '0' ? null : val);
+
       if (type === 'day') {
         return {
           dateLabel: item.priceDate || item.date || '',
-          priceLabel: item.price ?? item.avgPrice ?? null,
+          priceLabel: zeroToNull(item.price ?? item.avgPrice ?? null),
           priceChange: item.priceChange ?? null,
           priceChangeRate: item.priceChangeRate ?? null,
         };
       }
 
-      if (type === 'week') {
+      if (type === 'week' || type === 'month') {
         return {
-          dateLabel: `${item.startDate} ~ ${item.endDate}`,
-          priceLabel: item.avgPrice ?? null,
-          minPrice: item.minPrice ?? null,
-          maxPrice: item.maxPrice ?? null,
+          dateLabel:
+            type === 'week'
+              ? `${item.startDate} ~ ${item.endDate}`
+              : `${item.priceYear}-${String(item.priceMonth).padStart(2, '0')}`,
+          priceLabel: zeroToNull(item.avgPrice ?? null),
+          minPrice: zeroToNull(item.minPrice ?? null),
+          maxPrice: zeroToNull(item.maxPrice ?? null),
           priceChange: item.priceChange ?? null,
           priceChangeRate: item.priceChangeRate ?? null,
         };
       }
 
-      if (type === 'month') {
-        return {
-          dateLabel: `${item.priceYear}-${String(item.priceMonth).padStart(2, '0')}`,
-          priceLabel: item.avgPrice ?? null,
-          minPrice: item.minPrice ?? null,
-          maxPrice: item.maxPrice ?? null,
-          priceChange: item.priceChange ?? null,
-          priceChangeRate: item.priceChangeRate ?? null,
-        };
-      }
-
+      // year 처리
       return {
         dateLabel: `${item.priceYear}`,
-        priceLabel: item.avgPrice ?? null,
-        minPrice: item.minPrice ?? null,
-        maxPrice: item.maxPrice ?? null,
+        priceLabel: zeroToNull(item.avgPrice ?? null),
+        minPrice: zeroToNull(item.minPrice ?? null),
+        maxPrice: zeroToNull(item.maxPrice ?? null),
         priceChange: item.priceChange ?? null,
         priceChangeRate: item.priceChangeRate ?? null,
       };
@@ -629,10 +620,28 @@ export function usePriceSearch() {
               endDate: lastYearRange.endDate,
             });
             const normalizedLast = normalizeResult(extractPriceList(lastData), 'day');
-            lastYearPrices.value = priceResult.value.map((_, idx) => normalizedLast[idx]?.priceLabel ?? null);
+
+            const lastYearMap = new Map();
+            normalizedLast.forEach((item) => {
+              if (item.dateLabel) {
+                const dateParts = item.dateLabel.split('-');
+                if (dateParts.length === 3) {
+                  const nextYear = String(parseInt(dateParts[0]) + 1);
+                  const matchedKey = `${nextYear}-${dateParts[1]}-${dateParts[2]}`;
+                  lastYearMap.set(matchedKey, item.priceLabel);
+                }
+              }
+            });
+
+            lastYearPrices.value = priceResult.value.map((item) => {
+              const matched = lastYearMap.get(item.dateLabel);
+              return matched !== undefined ? matched : null;
+            });
           } catch (e) {
             lastYearPrices.value = priceResult.value.map(() => null);
           }
+        } else {
+          lastYearPrices.value = priceResult.value.map(() => null);
         }
 
         currentRange = { start: startStr, end: endStr };

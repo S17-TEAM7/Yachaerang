@@ -1,168 +1,84 @@
 <template>
-  <div class="forgot-container">
-    <div class="forgot-box">
-      <h1 class="title">비밀번호 찾기</h1>
+  <main class="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8">
+    <div class="w-full max-w-2xl space-y-6">
+      <!-- 헤더 -->
+      <div class="mb-10">
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900">비밀번호 찾기</h1>
+        <p class="mt-2 text-gray-600">가입하신 이메일로 인증번호를 받아 비밀번호를 재설정하세요</p>
+      </div>
 
-      <div class="form">
-        <div class="form-group">
-          <label class="label">이메일</label>
-          <input
-            type="email"
-            v-model="email"
-            class="input"
-            :disabled="emailSent"
-            placeholder="가입하신 이메일을 입력하세요"
-          />
-          <button v-if="!emailSent" type="button" class="btn" @click="sendResetCode" :disabled="isLoading">
-            인증번호 보내기
-          </button>
-          <p v-if="emailSent" class="message success">입력하신 이메일로 인증번호를 발송했습니다.</p>
-        </div>
+      <!-- 폼 카드 -->
+      <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <form @submit.prevent="handleSubmit" class="space-y-6">
+          <!-- 이메일 입력 -->
+          <div class="space-y-2">
+            <label for="email" class="text-sm font-medium text-gray-900">이메일</label>
+            <input
+              id="email"
+              v-model="email"
+              type="email"
+              :disabled="emailSent"
+              class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[#F44323] focus:outline-none focus:ring-2 focus:ring-[#F44323]/20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="가입하신 이메일을 입력해주세요"
+            />
+            <p v-if="emailSent" class="text-xs text-green-600 mt-1">입력하신 이메일로 인증번호를 발송했습니다.</p>
+          </div>
 
-        <div v-if="emailSent" class="form-group">
-          <label class="label">인증번호</label>
-          <input type="text" v-model="emailCode" maxlength="6" class="input" placeholder="인증번호 6자리 입력" />
-          <button type="button" class="btn" @click="resetPasswordWithCode" :disabled="isLoading">인증하기</button>
-        </div>
+          <!-- 인증번호 입력 -->
+          <div v-if="emailSent" class="space-y-2">
+            <label for="emailCode" class="text-sm font-medium text-gray-900">인증번호</label>
+            <input
+              id="emailCode"
+              v-model="emailCode"
+              type="text"
+              maxlength="6"
+              class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[#F44323] focus:outline-none focus:ring-2 focus:ring-[#F44323]/20 transition-colors"
+              placeholder="인증번호 6자리 입력"
+            />
+          </div>
 
-        <router-link class="back-link" :to="{ name: 'login' }">로그인으로 돌아가기</router-link>
+          <!-- 버튼 -->
+          <div class="space-y-3">
+            <button
+              v-if="!emailSent"
+              type="button"
+              @click="sendResetCode"
+              :disabled="isLoading || !email"
+              class="w-full rounded-lg bg-[#F44323] px-4 py-3 font-semibold text-white transition-all hover:bg-[#d63a1f] hover:shadow-md active:scale-[0.98] disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {{ isLoading ? "발송 중..." : "인증번호 보내기" }}
+            </button>
+            <button
+              v-else
+              type="button"
+              @click="resetPasswordWithCode"
+              :disabled="isLoading || !emailCode || emailCode.length !== 6"
+              class="w-full rounded-lg bg-[#F44323] px-4 py-3 font-semibold text-white transition-all hover:bg-[#d63a1f] hover:shadow-md active:scale-[0.98] disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {{ isLoading ? "인증 중..." : "인증하기" }}
+            </button>
+          </div>
+
+          <!-- 로그인으로 돌아가기 -->
+          <div class="pt-4 border-t border-gray-100">
+            <router-link :to="{ name: 'login' }" class="block text-center text-sm text-gray-600 hover:text-[#F44323] transition-colors">로그인으로 돌아가기</router-link>
+          </div>
+        </form>
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup>
-import { useForgotPasswordForm } from '@/views/auth/composables/useForgotPasswordForm';
+import { useForgotPasswordForm } from "@/views/auth/composables/useForgotPasswordForm";
 
 const { email, emailSent, emailCode, isLoading, sendResetCode, resetPasswordWithCode } = useForgotPasswordForm();
+
+const handleSubmit = () => {
+  if (!emailSent) {
+    sendResetCode();
+  } else {
+    resetPasswordWithCode();
+  }
+};
 </script>
-
-<style scoped>
-.forgot-container {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #fafafa;
-  padding: 40px 20px;
-}
-
-.forgot-box {
-  width: 100%;
-  max-width: 420px;
-}
-
-.title {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: #333;
-}
-
-.description {
-  font-size: 14px;
-  color: #777;
-  margin-bottom: 32px;
-  line-height: 1.5;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.input-with-button {
-  display: flex;
-  gap: 8px;
-}
-
-.input-with-button .input {
-  flex: 1;
-}
-
-.button-slot {
-  display: flex;
-  align-items: stretch;
-}
-
-.label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.input {
-  padding: 12px 14px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.input:focus {
-  border-color: #f5b041;
-}
-
-.message {
-  font-size: 12px;
-  margin: 0;
-}
-
-.message.success {
-  color: #27ae60;
-}
-
-.btn {
-  margin-top: 8px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: none;
-  background-color: #f5b041;
-  color: #333;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  white-space: nowrap;
-  min-width: 130px;
-}
-
-.btn:hover:not(:disabled) {
-  background-color: #e5a030;
-}
-
-.btn:disabled {
-  background-color: #ccc;
-  color: #888;
-  cursor: not-allowed;
-}
-
-.btn-placeholder {
-  margin-top: 8px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  min-width: 130px;
-}
-
-.back-link {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #666;
-  text-align: center;
-  text-decoration: none;
-}
-
-.back-link:hover {
-  color: #333;
-  text-decoration: underline;
-}
-</style>

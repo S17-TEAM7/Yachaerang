@@ -152,15 +152,26 @@ export function rank() {
     }
   }
 
-  async function handleRemoveFavorite(favoriteId) {
-    if (!confirm('관심 품목에서 삭제하시겠습니까?')) return;
+  const showRemoveFavoriteConfirm = ref(false);
+  const selectedFavoriteId = ref(null);
+
+  function handleRemoveFavorite(favoriteId) {
+    selectedFavoriteId.value = favoriteId;
+    showRemoveFavoriteConfirm.value = true;
+  }
+
+  async function handleRemoveFavoriteConfirm() {
+    if (!selectedFavoriteId.value) return;
 
     try {
-      await removeFavorite(favoriteId);
+      await removeFavorite(selectedFavoriteId.value);
       await loadFavorites();
     } catch (error) {
       toastStore.show('삭제 중 오류가 발생했습니다.', 'error');
       console.error('삭제 중 오류가 발생했습니다:', error);
+    } finally {
+      showRemoveFavoriteConfirm.value = false;
+      selectedFavoriteId.value = null;
     }
   }
 
@@ -212,5 +223,7 @@ export function rank() {
     goFavoriteDetail,
     goRankDetail,
     handleRemoveFavorite,
+    showRemoveFavoriteConfirm,
+    handleRemoveFavoriteConfirm,
   };
 }

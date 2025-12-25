@@ -45,6 +45,14 @@
     <div v-else class="py-10 text-center space-y-2">
       <p class="text-sm font-bold text-slate-300">북마크한 기사가 없습니다.</p>
     </div>
+
+    <ConfirmModal
+      :show="showRemoveConfirm"
+      title="북마크 삭제"
+      message="북마크에서 삭제하시겠습니까?"
+      @confirm="handleRemoveConfirm"
+      @cancel="showRemoveConfirm = false"
+    />
   </div>
 </template>
 
@@ -55,6 +63,7 @@ import { fetchBookmarks, removeBookmark } from '@/api/article';
 import { useToastStore } from '@/stores/toast';
 import LoadingSpinner from '@/components/spinner/LoadingSpinner.vue';
 import IconNewspaper from '@/components/icons/IconNewspaper.vue';
+import ConfirmModal from '@/components/modal/ConfirmModal.vue';
 
 const router = useRouter();
 const toastStore = useToastStore();
@@ -95,17 +104,28 @@ const goToDetail = (item) => {
 };
 
 
-const handleRemove = async (articleId) => {
-  if (!confirm('북마크에서 삭제하시겠습니까?')) return;
+const showRemoveConfirm = ref(false);
+const selectedArticleId = ref(null);
+
+const handleRemove = (articleId) => {
+  selectedArticleId.value = articleId;
+  showRemoveConfirm.value = true;
+};
+
+const handleRemoveConfirm = async () => {
+  if (!selectedArticleId.value) return;
 
   try {
-    await removeBookmark(articleId);
-    bookmarks.value = bookmarks.value.filter(item => item.articleId !== articleId);
+    await removeBookmark(selectedArticleId.value);
+    bookmarks.value = bookmarks.value.filter(item => item.articleId !== selectedArticleId.value);
     
     toastStore.show('북마크에서 삭제되었습니다.', 'success');
   } catch (error) {
     console.error('삭제 실패:', error);
     toastStore.show('삭제 중 오류가 발생했습니다.', 'error');
+  } finally {
+    showRemoveConfirm.value = false;
+    selectedArticleId.value = null;
   }
 };
 

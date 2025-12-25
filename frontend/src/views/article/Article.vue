@@ -9,8 +9,8 @@
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full space-y-8">
-      <div v-if="articles.length" class="grid gap-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full pt-12 pb-8 space-y-8">
+      <div v-if="articles.length" class="grid gap-8">
         <ArticleCard
           v-for="article in articles"
           :key="article.id"

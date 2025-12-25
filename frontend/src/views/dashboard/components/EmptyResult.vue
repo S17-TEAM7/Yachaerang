@@ -19,8 +19,8 @@
       </svg>
     </div>
 
-    <h3 class="text-lg font-bold text-gray-900 mb-2">조회된 가격 정보가 없습니다.</h3>
-    <p class="text-sm text-gray-500 max-w-[280px] leading-relaxed mb-6">
+    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-3">조회된 가격 정보가 없습니다.</h3>
+    <p class="text-base text-gray-500 max-w-[280px] leading-relaxed mb-6">
       선택하신 기간 내에 해당 품목의 시세 데이터가 존재하지 않습니다. 기간을 조정하거나 다른 품종을 선택해 보세요.
     </p>
   </div>
