@@ -81,19 +81,18 @@ dependencies {
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation "redis.clients:jedis:5.2.0"
+
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-redis'
+
     // H2
     testImplementation 'com.h2database:h2'
 
     // logging
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
-    // Spring AI
-    implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
-
     // Google GenAI
     implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
-    implementation 'org.springframework.ai:spring-ai-google-genai-spring-boot-starter'
 
     // OpenAI
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
