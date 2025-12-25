@@ -27,18 +27,19 @@ services:
       - my-network
     container_name: app-green
 
-  redis:
-    image: redis:7.4.1
+  redis-stack:
+    image: redis/redis-stack-server:7.4.0-v2
+    container_name: redis-stack
     restart: always
-    volumes:
-      - /home/ubuntu/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-      - /home/ubuntu/redis/redis_data:/data
     ports:
       - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - /home/ubuntu/redis/redis_data:/data
+      - /home/ubuntu/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     networks:
       - my-network
-    container_name: redis
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
   nginx:
     image: nginx:1.27.4
