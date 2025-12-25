@@ -1,6 +1,9 @@
 package com.yachaerang.backend.global.config;
 
 import com.yachaerang.backend.global.util.LogUtil;
+import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.redis.RedisVectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -78,5 +81,17 @@ public class RedisVectorConfig {
 
             LogUtil.info("Created vector index: {}", indexName);
         }
+    }
+
+    @Bean
+    public VectorStore redisVectorStore(
+            OpenAiApi.EmbeddingModel embeddingModel,
+            JedisPooled jedisPooled) {
+
+        return RedisVectorStore.builder(jedisPooled, embeddingModel)
+                .indexName("crop-rag-index")
+                .prefix("crop:")
+                .initializeSchema(true)
+                .build();
     }
 }
