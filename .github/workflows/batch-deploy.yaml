@@ -19,13 +19,6 @@ jobs:
       - name: Create .env file from secret
         run: echo "${{ secrets.ENV_FILE_CONTENTS }}" > batch/.env
 
-      - name: Build with Gradle (skip tests)
-        run: |
-          cd batch
-          chmod +x ./gradlew
-          ./gradlew clean
-          ./gradlew build -x test
-
       # Docker login
       - name: Docker Login to GHCR
         run: echo ${{ secrets.YY_GITHUB_PAT }} | docker login ghcr.io -u ${{ secrets.YY_GITHUB_USERNAME }} --password-stdin
@@ -33,6 +26,7 @@ jobs:
       # Image Build and Push
       - name: Build and Push Docker Image
         run: |
+          cd batch
           docker build -t ghcr.io/${{ secrets.ORG_NAME }}/spring-batch:latest .
           docker push ghcr.io/${{ secrets.ORG_NAME }}/spring-batch:latest
 

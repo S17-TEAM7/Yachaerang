@@ -8,6 +8,17 @@ on:
   push:
     branches:
       - main
+    workflow_dispatch:
+      inputs:
+        deploy-target:
+          description: 'Select Deployment target'
+          required: true
+          type: choice
+          options:
+            - all
+            - backend
+            - batch
+            - frontend
 
 jobs:
   detect-changes:
@@ -23,6 +34,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Auto
       - name: Filter paths
         uses: dorny/paths-filter@v2
         id: filter
@@ -34,6 +46,31 @@ jobs:
               - 'batch/**'
             frontend:
               - 'frontend/**'
+
+      # Select
+      - name: Select Deployment target
+        if: github.event_name == 'workflow_dispatch'
+        id: manual
+        run: |
+          TARGET="${{ github.event.inputs.deploy-target }}"
+          
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "backend" ]; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "batch" ]; then
+            echo "batch=true" >> $GITHUB_OUTPUT
+          else
+            echo "batch=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "frontend" ]; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi 
 
   # backend Deploy
   deploy-backend:
