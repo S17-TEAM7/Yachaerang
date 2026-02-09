@@ -91,6 +91,7 @@ import {
   fetchReactionStatistics,
   fetchReactionMembers,
 } from '@/api/article';
+import { getMyProfile } from '@/api/member';
 import { useToastStore } from '@/stores/toast';
 import { useArticle } from '@/views/article/composables/useArticles';
 import { tokenStorage } from '@/utils/storage';
@@ -188,35 +189,51 @@ const loadReactionStatistics = async (articleId) => {
 
 const loadReactionMembers = async (articleId) => {
   try {
-    const allMembers = [];
-    const reactionTypes = ['HELPFUL', 'GOOD', 'SURPRISED', 'SAD', 'BUMMER'];
-    const currentUser = tokenStorage.getUser();
-    const currentUserNickname = currentUser?.nickname;
-
-    // 모든 리액션 타입에 대한 멤버 조회
-    for (const backendType of reactionTypes) {
+    myReaction.value = null; // 초기화
+    
+    let currentUser = tokenStorage.getUser();
+    
+    // 로컬 스토리지에 유저가 없으면 서버에서 가져오기
+    if (!currentUser && tokenStorage.getAccessToken()) {
       try {
-        const response = await fetchReactionMembers(articleId, backendType);
-        const members = response.data?.data || [];
-        const frontendType = REACTION_TYPE_REVERSE_MAP[backendType];
-
-        members.forEach((member) => {
-          allMembers.push({
-            nickname: member.nickname,
-            profile: member.imageUrl || '',
-            type: frontendType,
-          });
-
-          // 현재 사용자의 리액션 타입 확인
-          if (currentUserNickname && member.nickname === currentUserNickname) {
-            myReaction.value = frontendType;
-          }
-        });
+        const response = await getMyProfile();
+        if (response.data?.success) {
+          currentUser = response.data.data;
+          tokenStorage.setUser(currentUser);
+        }
       } catch (error) {
-        // 특정 타입 조회 실패는 무시하고 계속 진행
-        console.warn(`리액션 멤버 조회 실패 (${backendType}):`, error);
+        console.error('사용자 프로필 조회 실패:', error);
       }
     }
+    
+    const currentUserNickname = currentUser?.nickname;
+    const reactionTypes = ['HELPFUL', 'GOOD', 'SURPRISED', 'SAD', 'BUMMER'];
+    
+    // 모든 리액션 타입에 대한 멤버 병렬 조회
+    const memberResponses = await Promise.all(
+      reactionTypes.map(type => fetchReactionMembers(articleId, type))
+    );
+
+    const allMembers = [];
+    
+    memberResponses.forEach((response, index) => {
+      const members = response.data?.data || [];
+      const backendType = reactionTypes[index];
+      const frontendType = REACTION_TYPE_REVERSE_MAP[backendType];
+
+      members.forEach((member) => {
+        allMembers.push({
+          nickname: member.nickname,
+          profile: member.imageUrl || '',
+          type: frontendType,
+        });
+
+        // 현재 사용자의 리액션 타입 확인
+        if (currentUserNickname && member.nickname === currentUserNickname) {
+          myReaction.value = frontendType;
+        }
+      });
+    });
 
     allReactors.value = allMembers;
   } catch (error) {
