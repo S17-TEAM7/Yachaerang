@@ -1,6 +1,10 @@
 name: Backend Deploy
+#on:
+#  workflow_call:
 on:
-  workflow_call:
+  push:
+    branches:
+      - main
 jobs:
   build:
     name: Build
