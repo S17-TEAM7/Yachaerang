@@ -6,31 +6,31 @@
 
 ## 🥬 프로젝트 소개 🥬
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/page1.png">
+<img src=/exec/page1.png>
 
 <br>
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/page2.png">
+<img src=/exec/page2.png>
 
 <br>
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/page3.png">
+<img src=/exec/page3.png>
 
 <br>
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/page4.png">
+<img src=/exec/page4.png>
 
 <br>
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/page5.png">
+<img src=/exec/page5.png>
 
 <br>
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/page6.png">
+<img src=/exec/page6.png>
 
 <br>
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/page7.png">
+<img src=/exec/page7.png>
 
 <br>
 
@@ -148,7 +148,7 @@ frontend/src
 
 ## ✨ 아키텍처 ✨
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/architecture.png">
+<img src=/exec/architecture.png>
 
 <br>
 
@@ -156,7 +156,7 @@ frontend/src
 
 ## ✨ ERD ✨
 
-<img src="https://yachaerang-s3-bucket.s3.ap-northeast-2.amazonaws.com/images/erd.png">
+<img src=/exec/ERD.png>
 
 <br>
 
@@ -173,3 +173,13 @@ frontend/src
 | **CI/CD**    | Github Actions                                              |
 | **API Docs** | Notion, REST Docs                                           |
 | **Infra**    | AWS EC2, AWS RDS, AWS S3, Docker, Nginx                     |
+
+<br>
+
+---
+
+## ✨ 코드 커버리지 ✨
+
+> 백엔드 코드 커버리지 결과입니다.
+
+[![codecov](https://codecov.io/gh/S17-TEAM7/Yachaerang/branch/main/graph/badge.svg)](https://codecov.io/gh/yachaerang/backend)

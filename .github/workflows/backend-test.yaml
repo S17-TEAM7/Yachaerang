@@ -1,150 +1,40 @@
-name: Backend-CI
+name: Backend Test CI with Codecov
 
 on:
   push:
-    branches: [develop]
+    branches: [ main, develop ]
   pull_request:
-    branches: [develop]
-
-env:
-  JAVA_VERSION: '17'
+    branches: [ main, develop ]
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-22.04
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            backend:
-              - 'packages/backend/**'
-
-  backend-lint:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: 'gradle'
-
-      - run: chmod +x ./gradlew
-
-      # Checkstyle 없을 때 Skip
-      - name: Checkstyle (if configured)
-        run: |
-          if ./gradlew tasks --all | grep -qE '(^|\s)checkstyleMain($|\s)'; then
-            ./gradlew checkstyleMain checkstyleTest --no-daemon
-          else
-            echo "Checkstyle not configured. Skipping."
-          fi
-
   backend-test:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/backend
-
-    # Redis 설정
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    name: Backend Test & Coverage
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
+          java-version: '17'
           distribution: 'temurin'
-          java-version: ${{ env.JAVA_VERSION }}
           cache: 'gradle'
 
-      - run: chmod +x ./gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x backend/gradlew
 
-      # TEST + JacocoTestCoverage 설정
-      - name: Run tests + JaCoCo verification
-        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification --no-daemon
-        env:
-          SPRING_PROFILES_ACTIVE: test
-          SPRING_DATA_REDIS_HOST: localhost
-          SPRING_DATA_REDIS_PORT: 6379
-          SPRING_DATA_REDIS_PASSWORD: ""
+      - name: Test with Gradle
+        working-directory: backend
+        run: ./gradlew clean test jacocoTestReport
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-          name: backend-test-results
-          path: |
-            packages/backend/build/reports/tests/
-            packages/backend/build/reports/jacoco/
-          retention-days: 7
-
-      # Upload Report Files And Using Gradle
-      - uses: codecov/codecov-action@v4
-        if: always()
-        continue-on-error: true
-        with:
-          files: ./packages/backend/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: S17-TEAM7/Yachaerang
+          files: backend/build/reports/jacoco/test/jacocoTestReport.xml
           flags: backend
-
-  backend-build:
-    needs: [detect-changes, backend-lint, backend-test]
-    if: needs.detect-changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: 'gradle'
-      - run: chmod +x ./gradlew
-      - run: ./gradlew build -x test --no-daemon
-      - uses: actions/upload-artifact@v4
-        with:
-          name: backend-build
-          path: packages/backend/build/libs/*.jar
-          retention-days: 1
-
-  ci-success:
-    needs: [detect-changes, backend-build]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check results
-        run: |
-          if [[ "${{ needs.detect-changes.outputs.backend }}" != "true" ]]; then
-            echo "No backend changes. CI passed!"
-            exit 0
-          fi
-
-          if [[ "${{ needs.backend-build.result }}" == "success" ]]; then
-            echo "Backend CI passed!"
-            exit 0
-          else
-            echo "Backend CI failed: ${{ needs.backend-build.result }}"
-            exit 1
-          fi
+          name: backend-coverage
+          fail_ci_if_error: true
+          verbose: true
