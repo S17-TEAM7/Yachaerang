@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/batch")
 public class BatchJobController {
 
     private final BatchJobService batchJobService;
@@ -32,8 +31,7 @@ public class BatchJobController {
 
         return ResponseEntity.ok(Map.of(
                 "status", "Job 실행 완료",
-                "targetDate", targetDate.toString()
-        ));
+                "targetDate", targetDate.toString()));
     }
 
     /**
@@ -64,6 +62,7 @@ public class BatchJobController {
 
     /**
      * 특정년도의 특정 week에 대한 조사
+     * 
      * @param year : 대상 년도
      * @param week : 대상 주차(N주차)
      * @return
@@ -71,8 +70,7 @@ public class BatchJobController {
     @PostMapping("/weekly-price")
     public ResponseEntity<Map<String, Object>> runWeeklyPriceJob(
             @RequestParam("year") Integer year,
-            @RequestParam("week") Integer week
-    ) {
+            @RequestParam("week") Integer week) {
         Map<String, Object> response = new HashMap<>();
         try {
             JobExecution execution = batchJobService.runWeeklyAggregation(year, week);
@@ -97,8 +95,7 @@ public class BatchJobController {
             @RequestParam("startYear") Integer startYear,
             @RequestParam("startWeek") Integer startWeek,
             @RequestParam("endYear") Integer endYear,
-            @RequestParam("endWeek") Integer endWeek
-    ) {
+            @RequestParam("endWeek") Integer endWeek) {
         Map<String, Object> response = new HashMap<>();
         try {
             List<JobExecution> executionList = batchJobService.collectWeekly(startYear, startWeek, endYear, endWeek);
@@ -130,13 +127,12 @@ public class BatchJobController {
     }
 
     /*
-    특정 월의 월간 집계 데이터 구하기
+     * 특정 월의 월간 집계 데이터 구하기
      */
     @PostMapping("/monthly-price")
     public ResponseEntity<Map<String, Object>> runMonthlyPriceJob(
             @RequestParam("year") Integer year,
-            @RequestParam("month") Integer month
-    ) throws JobExecutionException {
+            @RequestParam("month") Integer month) throws JobExecutionException {
 
         Map<String, Object> response = new HashMap<>();
         try {
@@ -156,7 +152,7 @@ public class BatchJobController {
     }
 
     /*
-    특정 년도의 연간 데이터 구하기
+     * 특정 년도의 연간 데이터 구하기
      */
     @PostMapping("/yearly-price")
     public ResponseEntity<Map<String, Object>> runYearlyPriceJob(@RequestParam Integer year) {
