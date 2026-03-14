@@ -66,7 +66,7 @@ jobs:
             docker run -d \
               --name spring-batch \
               --env-file .env \
-              -p 8082:8080 \
+              -p 8082:8082 \
               --restart unless-stopped \
               ghcr.io/${{ secrets.ORG_NAME }}/spring-batch:latest
             
