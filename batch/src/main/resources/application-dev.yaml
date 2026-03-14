@@ -44,3 +44,13 @@ management:
   endpoint:
     health:
       show-details: never
+
+prometheus:
+  push:
+    rate: 5000
+  job:
+    name: batch_server_scrape
+  grouping:
+    key: appname
+  pushgateway:
+    url: pushgateway:9091

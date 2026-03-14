@@ -40,4 +40,14 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: health,info, prometheus
+        include: health,info
+
+prometheus:
+  push:
+    rate: 5000
+  job:
+    name: batch_server_scrape
+  grouping:
+    key: appname
+  pushgateway:
+    url: localhost:9091
