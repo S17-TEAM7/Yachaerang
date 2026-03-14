@@ -34,3 +34,13 @@ external:
   kamis:
     api-key: ${KAMIS_API_KEY}
     id: ${KAMIS_API_ID}
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
