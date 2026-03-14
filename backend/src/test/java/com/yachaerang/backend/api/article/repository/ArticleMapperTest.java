@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @Sql("classpath:H2_schema.sql")
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+@SqlConfig(encoding = "UTF-8")
 @Import(MyBatisConfig.class)
 class ArticleMapperTest {
 
@@ -41,6 +43,8 @@ class ArticleMapperTest {
         assertThat(article).isNotNull();
         assertThat(article.getId()).isEqualTo(articleId);
         assertThat(article.getTitle()).isNotNull();
+        assertThat(article.getStatus()).isEqualTo(Article.Status.pending);
+        assertThat(article.getImageCount()).isEqualTo(0);
     }
 
     @Test

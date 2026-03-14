@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS BATCH_JOB_SEQ (
+                                             ID         BIGINT NOT NULL,
+                                             UNIQUE_KEY CHAR(1) NOT NULL,
+    CONSTRAINT BATCH_JOB_SEQ_UN UNIQUE (UNIQUE_KEY)
+    );
+INSERT INTO BATCH_JOB_SEQ (ID, UNIQUE_KEY)
+SELECT 0, '0'
+    WHERE NOT EXISTS (SELECT * FROM BATCH_JOB_SEQ);
+
+CREATE TABLE IF NOT EXISTS BATCH_JOB_EXECUTION_SEQ (
+                                                       ID         BIGINT NOT NULL,
+                                                       UNIQUE_KEY CHAR(1) NOT NULL,
+    CONSTRAINT BATCH_JOB_EXEC_SEQ_UN UNIQUE (UNIQUE_KEY)
+    );
+INSERT INTO BATCH_JOB_EXECUTION_SEQ (ID, UNIQUE_KEY)
+SELECT 0, '0'
+    WHERE NOT EXISTS (SELECT * FROM BATCH_JOB_EXECUTION_SEQ);
+
+CREATE TABLE IF NOT EXISTS BATCH_STEP_EXECUTION_SEQ (
+                                                        ID         BIGINT NOT NULL,
+                                                        UNIQUE_KEY CHAR(1) NOT NULL,
+    CONSTRAINT BATCH_STEP_EXEC_SEQ_UN UNIQUE (UNIQUE_KEY)
+    );
+INSERT INTO BATCH_STEP_EXECUTION_SEQ (ID, UNIQUE_KEY)
+SELECT 0, '0'
+    WHERE NOT EXISTS (SELECT * FROM BATCH_STEP_EXECUTION_SEQ);

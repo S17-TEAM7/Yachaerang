@@ -1,0 +1,14 @@
+server:
+  port: 8082
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+spring:
+  application:
+    name: "batch"
+  config:
+    activate:
+      on-profile:
+        - "dev"
+        - "local"
