@@ -1,0 +1,24 @@
+server:
+  port: 8082
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+spring:
+  application:
+    name: "batch"
+  config:
+    activate:
+      on-profile:
+        - "dev"
+        - "local"
+
+prometheus:
+  push:
+    rate: 5000
+  job:
+    name: batch_server_scrape
+  grouping:
+    key: appname
+  pushgateway:
+    url: localhost:9091
