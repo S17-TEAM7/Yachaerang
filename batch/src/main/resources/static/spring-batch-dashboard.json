@@ -1,0 +1,216 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "2018"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 4, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "spring_batch_job_launch_count_total",
+          "legendFormat": "{{spring_batch_job_name}} {{spring_batch_job_status}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Job Launch Total Count",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 4, "x": 4, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "spring_batch_job_active_seconds_count{spring_batch_job_active_status=\"COMPLETED\"}",
+          "legendFormat": "{{spring_batch_job_active_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Job COMPLETED Count",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 4, "x": 8, "y": 0 },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "spring_batch_job_active_seconds_count{spring_batch_job_active_status=\"FAILED\"}",
+          "legendFormat": "{{spring_batch_job_active_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Job FAILED Count",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "spring_batch_job_active_seconds_max",
+          "legendFormat": "{{spring_batch_job_active_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Job Duration",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "spring_batch_step_active_seconds_max",
+          "legendFormat": "{{spring_batch_step_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Step Duration",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "rate(spring_batch_item_read_seconds_count[1m])",
+          "legendFormat": "{{spring_batch_item_read_step_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Item Read Throughput",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "rate(spring_batch_item_process_seconds_count[1m])",
+          "legendFormat": "{{spring_batch_item_process_step_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Item Process Throughput",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "rate(spring_batch_chunk_write_seconds_count[1m])",
+          "legendFormat": "{{spring_batch_chunk_write_step_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Item Write Throughput",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "id": 9,
+      "targets": [
+        {
+          "expr": "rate(spring_batch_chunk_process_seconds_sum[1m]) / rate(spring_batch_chunk_process_seconds_count[1m])",
+          "legendFormat": "{{spring_batch_chunk_step_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Average Chunk Processing Time",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "id": 10,
+      "targets": [
+        {
+          "expr": "rate(spring_batch_item_read_seconds_sum[1m]) / rate(spring_batch_item_read_seconds_count[1m])",
+          "legendFormat": "{{spring_batch_item_read_step_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Item Read Latency",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "id": 11,
+      "targets": [
+        {
+          "expr": "rate(spring_batch_chunk_write_seconds_sum[1m]) / rate(spring_batch_chunk_write_seconds_count[1m])",
+          "legendFormat": "{{spring_batch_chunk_write_step_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Item Write Latency",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "id": 12,
+      "targets": [
+        {
+          "expr": "increase(spring_batch_step_skip_count[5m])",
+          "legendFormat": "{{spring_batch_step_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Step Skip Count",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 40,
+  "tags": ["spring-batch", "prometheus"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Spring Batch Dashboard with PushGateway (Enhanced)",
+  "uid": "spring-batch-pushgateway-enhanced",
+  "version": 1,
+  "weekStart": ""
+}
