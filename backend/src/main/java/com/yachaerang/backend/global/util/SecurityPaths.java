@@ -20,7 +20,8 @@ public final class SecurityPaths {
             "/api/v1/yearly-prices/**",
             "/actuator/health",
             "/actuator/health/**",
-            "/actuator/prometheus"
+            "/actuator/prometheus",
+            "/grafana/**"
     };
 
     /**
