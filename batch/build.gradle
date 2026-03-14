@@ -54,6 +54,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.flywaydb:flyway-core:9.8.1'
     implementation 'org.flywaydb:flyway-mysql:9.8.1'
+
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // prometheus
+    implementation 'io.micrometer:micrometer-registry-prometheus-simpleclient'
+    implementation 'io.prometheus:simpleclient_pushgateway'
 }
 
 tasks.named('test') {

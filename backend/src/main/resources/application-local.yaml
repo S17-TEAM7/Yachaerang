@@ -29,3 +29,10 @@ logging:
   config: classpath:logback-spring.xml
   level:
     root: info
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info, prometheus

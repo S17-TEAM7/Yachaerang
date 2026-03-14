@@ -8,8 +8,18 @@
         <id property="id" column="article_id"/>
         <result property="title" column="title" javaType="String"/>
         <result property="content" column="content" javaType="String"/>
-        <result property="url" column="url" javaType="String"/>
+        <result property="contentHash" column="content_hash" javaType="String"/>
         <result property="imageUrl" column="image_url" javaType="String"/>
+        <result property="imageMap" column="image_map"
+                typeHandler="com.yachaerang.backend.global.util.JsonTypeHandler"/>
+        <result property="imageCount" column="image_count" javaType="int"/>
+        <result property="url" column="url" javaType="String"/>
+        <result property="sourceHost" column="source_host" javaType="String"/>
+        <result property="fetchedAt" column="fetched_at" javaType="java.time.LocalDateTime"/>
+        <result property="status" column="status"
+                javaType="com.yachaerang.backend.api.article.entity.Article$Status"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="errorMessage" column="error_message" javaType="String"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
         <!-- 1:N 관계 매핑 -->
