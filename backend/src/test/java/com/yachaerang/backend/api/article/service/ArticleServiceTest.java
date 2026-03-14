@@ -67,12 +67,16 @@ class ArticleServiceTest {
         tag3 = Tag.builder().id(3L).name("tag3").articleId(2L).build();
         tag4 = Tag.builder().id(4L).name("tag4").articleId(2L).build();
 
-        article1 = new Article(1L, "title1", "content1", "default.png", "http://example.com",
-                List.of(tag1, tag2));
+        article1 = Article.builder()
+                .id(1L).title("title1").content("content1")
+                .imageUrl("default.png").url("http://example.com")
+                .tagList(List.of(tag1, tag2)).build();
         article1.setCreatedAt(LocalDateTime.of(2020, 11, 11, 11, 11));
 
-        article2 = new Article(2L, "title2", "content2", "default.png", "http://example.com",
-                List.of(tag3, tag4));
+        article2 = Article.builder()
+                .id(2L).title("title2").content("content2")
+                .imageUrl("default.png").url("http://example.com")
+                .tagList(List.of(tag3, tag4)).build();
         article2.setCreatedAt(LocalDateTime.of(2020, 11, 12, 11, 11));
 
         pageRequest = ArticleRequestDto.PageDto.builder()
