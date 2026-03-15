@@ -61,7 +61,6 @@ dependencies {
     // prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus-simpleclient'
     implementation 'io.prometheus:simpleclient_pushgateway'
-
 }
 
 tasks.named('test') {
