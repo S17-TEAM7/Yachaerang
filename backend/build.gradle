@@ -104,6 +104,7 @@ dependencies {
 
     // prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus'
+
 }
 
 def snippetsDir = layout.buildDirectory.dir("generated-snippets")
