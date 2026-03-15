@@ -177,9 +177,3 @@ frontend/src
 <br>
 
 ---
-
-## ✨ 코드 커버리지 ✨
-
-> 백엔드 코드 커버리지 결과입니다.
-
-[![codecov](https://codecov.io/gh/S17-TEAM7/Yachaerang/branch/main/graph/badge.svg)](https://codecov.io/gh/yachaerang/backend)
