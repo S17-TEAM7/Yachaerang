@@ -28,7 +28,7 @@ jobs:
 
       # Docker login
       - name: Docker Login to GHCR
-        run: echo ${{ secrets.YY_GITHUB_PAT }} | docker login ghcr.io -u ${{ secrets.YY_GITHUB_USERNAME }} --password-stdin
+        run: echo "${{ secrets.YY_GITHUB_PAT }}" | docker login ghcr.io -u ${{ secrets.YY_GITHUB_USERNAME }} --password-stdin
 
       # Image Build and Push
       - name: Build and Push Docker Image
@@ -40,6 +40,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-22.04
+    needs: build
     steps:
       - name: SSH into EC2 server and Deploy
         uses: appleboy/ssh-action@v1
