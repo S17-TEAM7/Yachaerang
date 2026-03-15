@@ -10,10 +10,6 @@
 
 <br>
 
-<img src=/exec/page2.png>
-
-<br>
-
 <img src=/exec/page3.png>
 
 <br>
