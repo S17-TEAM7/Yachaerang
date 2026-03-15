@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -27,7 +27,7 @@ jobs:
 
       # Docker login
       - name: Docker Login to GHCR
-        run: echo ${{ secrets.YY_GITHUB_PAT }} | docker login ghcr.io -u ${{ secrets.YY_GITHUB_USERNAME }} --password-stdin
+        run: echo "${{ secrets.YY_GITHUB_PAT }}" | docker login ghcr.io -u ${{ secrets.YY_GITHUB_USERNAME }} --password-stdin
 
       # Image Build and Push
       - name: Build and Push Docker Image
