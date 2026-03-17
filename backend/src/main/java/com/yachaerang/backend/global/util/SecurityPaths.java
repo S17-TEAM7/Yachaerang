@@ -21,7 +21,8 @@ public final class SecurityPaths {
             "/actuator/health",
             "/actuator/health/**",
             "/actuator/prometheus",
-            "/grafana/**"
+            "/grafana/**",
+            "/prometheus/**"
     };
 
     /**
