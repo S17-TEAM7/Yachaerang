@@ -105,6 +105,11 @@ public enum ErrorCode implements BaseCode{
     REACTION_DB_FAILED(HttpStatus.BAD_REQUEST, "REACTION_002", "리액션을 저장하는 데에 실패하였습니다."),
     REACTION_NOT_FOUND(HttpStatus.NOT_FOUND, "REACTION_003", "저장된 리액션 조회가 불가능합니다."),
 
+    // batch
+    BATCH_CALL_FAILED(HttpStatus.BAD_GATEWAY, "BATCH_001", "배치 서버 호출에 실패했습니다."),
+    BATCH_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "BATCH_002", "배치 서버 응답이 지연되고 있습니다."),
+    BATCH_CONNECTION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "BATCH_003", "배치 서버에 연결할 수 없습니다."),
+
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500ERROR", "서버에서 장애가 일어났습니다."),
     ;
