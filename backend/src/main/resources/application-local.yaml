@@ -36,3 +36,9 @@ management:
       base-path: /actuator
       exposure:
         include: health,info, prometheus
+
+batch:
+  client:
+    base-url: http://localhost:8082
+    connect-timeout-ms: 3000
+    read-timeout-ms: 10000

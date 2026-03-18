@@ -1,4 +1,8 @@
 spring:
+  config:
+    activate:
+      on-profile: "dev"
+
   flyway:
     baseline-on-migrate: true
     locations:
@@ -37,3 +41,9 @@ management:
   endpoint:
     health:
       show-details: never
+
+batch:
+  client:
+    base-url: http://batch:8082
+    connect-timeout-ms: 3000
+    read-timeout-ms: 10000
