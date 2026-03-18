@@ -24,6 +24,13 @@ public class GlobalExceptionHandler {
         return ErrorResponse.of(e.getErrorCode());
     }
 
+    // Batch 서버 호출 예외
+    @ExceptionHandler(BatchException.class)
+    protected ResponseEntity<ErrorResponse> handleBatchException(BatchException e, HttpServletRequest request) {
+        LogUtil.error(e, request);
+        return ErrorResponse.of(e.getErrorCode());
+    }
+
     // 성공 응답(200)이되, 에러 메세지를 담아서 반환
     @ExceptionHandler(CustomException.class)
     protected ResponseEntity<ApiResponse<?>> handlerCustomException(CustomException ex) {
