@@ -48,8 +48,10 @@
 
 ## 🗂️ 프로젝트 구조 🗂️
 
-- backend
-```
+<details>
+  <summary>Backend</summary>
+
+```text
 com.yachaerang.backend
 ├── api                                   # API 도메인 및 비즈니스 로직
 │   ├── article                           # 게시글 도메인
@@ -59,27 +61,32 @@ com.yachaerang.backend
 │   ├── farm                              # 나의 농장 관리 도메인
 │   ├── favorite                          # 관심 상품 도메인
 │   ├── member                            # 회원 관리 도메인
-│   ├── product                           # 농산물 가격 및 상품 도메인 (Daily, Weekly, Monthly, Yearly)
+│   ├── product                           # 농산물 가격 및 상품 도메인
 │   └── reaction                          # 반응(좋아요 등) 도메인
 │
 ├── global                                # 전역 설정 및 유틸리티
-│   ├── auth                              # 인증/인가 관련 (JWT, SecurityConfig, OAuth)
-│   ├── config                            # 설정 파일 (Async, Redis, MyBatis, WebClient 등)
-│   ├── exception                         # 전역 예외 처리 (GlobalExceptionHandler)
-│   ├── filter                            # 필터 설정 (LoggingFilter 등)
+│   ├── auth                              # 인증/인가 (JWT, SecurityConfig)
+│   ├── config                            # 설정 (Async, Redis, MyBatis 등)
+│   ├── exception                         # 전역 예외 처리
+│   ├── filter                            # 필터 설정
 │   ├── health                            # 헬스 체크
-│   ├── response                          # 공통 응답 포맷 (ApiResponse)
-│   └── util                              # 유틸리티 클래스 (TypeHandler 등)
+│   ├── response                          # 공통 응답 포맷
+│   └── util                              # 유틸 클래스
 │
 ├── infrastructure                        # 외부 인프라 연동
-│   ├── s3                                # AWS S3 파일 업로드/다운로드
-│   └── smtp                              # 이메일 전송 서비스
+│   ├── s3                                # AWS S3
+│   └── smtp                              # 이메일 전송
 │
-└── BackendApplication 
+└── BackendApplication
 ```
+</details>
 
-- batch
-```
+<br>
+
+<details>
+  <summary>Batch</summary>
+
+```text
 com.yachaerang.batch
 ├── configuration                         # 배치 및 시스템 설정
 │   ├── job                               # Spring Batch Job 설정 (Daily, Weekly, Monthly, Yearly 등)
@@ -102,11 +109,16 @@ com.yachaerang.batch
 ├── scheduler                             # 스케줄러 (Daily, Monthly, Weekly 등)
 ├── service                               # 비즈니스 서비스 (API 호출, 데이터 집계 등)
 ├── util                                  # 유틸리티 (날짜, 파싱 등)
-└── BatchApplication                     
+└── BatchApplication  
 ```
+</details>
 
-- frontend
-```
+<br>
+
+<details>
+  <summary>Frontend</summary>
+
+```text
 frontend/src
 ├── api                                   # API 호출 모듈 (Axios 인터셉터 및 도메인별 API)
 │   ├── article.js, auth.js, chat.js ...
@@ -141,6 +153,7 @@ frontend/src
 ├── App.vue                               # 루트 컴포넌트
 └── main.js                               # 앱 진입점
 ```
+</details>
 
 <br>
 
