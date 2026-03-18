@@ -27,6 +27,19 @@ services:
       - my-network
     container_name: app-green
 
+  spring-batch:
+    image: ghcr.io/${ORG_NAME}/spring-batch:latest
+    ports:
+      - "8082:8082"
+    env_file:
+      - /home/ubuntu/deploy/.env
+    volumes:
+      - /home/ubuntu/logs:/app/logs
+    depends_on:
+      - redis
+    networks:
+      - my-network
+    container_name: spring-batch
   redis:
     image: redis:7.4.1
     restart: always
