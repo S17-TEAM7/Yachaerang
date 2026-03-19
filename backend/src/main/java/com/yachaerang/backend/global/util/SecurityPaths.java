@@ -21,7 +21,8 @@ public final class SecurityPaths {
             "/actuator/health",
             "/actuator/health/**",
             "/actuator/prometheus",
-            "/grafana/**"
+            "/grafana/**",
+            "/prometheus/**"
     };
 
     /**
@@ -40,5 +41,6 @@ public final class SecurityPaths {
      * 관리자 서비스
      */
     public static final String[] ADMIN = {
+            "/api/batch/**",
     };
 }

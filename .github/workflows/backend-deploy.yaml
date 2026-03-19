@@ -66,7 +66,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            echo "${{ secrets.NGINX_CONF }}" > /home/ubuntu/deploy/nginx.conf
+            cat << 'EOF' > /home/ubuntu/deploy/nginx.conf
+            ${{ secrets.NGINX_CONF }}
+            EOF
             
             echo "${{ secrets.ENV_FILE_CONTENTS }}" > /home/ubuntu/deploy/.env
             

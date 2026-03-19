@@ -89,6 +89,9 @@ dependencies {
     // Spring AI
     implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
 
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
     // WebFlux
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
@@ -197,4 +200,3 @@ tasks.named('test') {
         destinationFile = layout.buildDirectory.file("jacoco/test.exec").get().asFile
     }
 }
-

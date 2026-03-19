@@ -50,25 +50,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            mkdir -p ~/batch
-            cd ~/batch
-            
-            echo "${{ secrets.ENV_FILE_CONTENTS }}" > .env
-            
+            echo "${{ secrets.ENV_FILE_CONTENTS }}" > /home/ubuntu/deploy/.env
+
             echo "${{ secrets.YY_GITHUB_PAT }}" | docker login ghcr.io -u ${{ secrets.YY_GITHUB_USERNAME }} --password-stdin
-            
+
+            export ORG_NAME=${{ secrets.ORG_NAME }}
+
             docker pull ghcr.io/${{ secrets.ORG_NAME }}/spring-batch:latest
-            
-            # rm existing container
-            docker stop spring-batch || true
-            docker rm spring-batch || true
-            
-            # run new container
-            docker run -d \
-              --name spring-batch \
-              --env-file .env \
-              -p 8082:8082 \
-              --restart unless-stopped \
-              ghcr.io/${{ secrets.ORG_NAME }}/spring-batch:latest
-            
-            docker image prune -f
+
+            cd /home/ubuntu/deploy
+            docker compose -f docker-compose.dev.yaml down spring-batch
+            docker compose -f docker-compose.dev.yaml up -d spring-batch
