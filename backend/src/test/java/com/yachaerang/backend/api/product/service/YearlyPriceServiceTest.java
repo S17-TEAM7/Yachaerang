@@ -1,35 +1,33 @@
 package com.yachaerang.backend.api.product.service;
 
-import com.yachaerang.backend.api.product.dto.response.MonthlyPriceResponseDto;
 import com.yachaerang.backend.api.product.dto.response.YearlyPriceResponseDto;
 import com.yachaerang.backend.api.product.repository.YearlyPriceMapper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
-
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-@Transactional
+
 @ExtendWith(MockitoExtension.class)
 class YearlyPriceServiceTest {
 
@@ -161,5 +159,126 @@ class YearlyPriceServiceTest {
 
         verify(yearlyPriceMapper, times(1))
                 .getPriceSpecification(productCode, targetYear);
+    }
+
+    // ─── 캐시 레이어 테스트 ────────────────────────────────────────────────────
+    // getPrices  캐시 조건: endYear < now().year
+    // getPrice   캐시 조건: targetYear < now().year
+    @Nested
+    @ExtendWith(SpringExtension.class)
+    @ContextConfiguration(classes = CacheLayerTest.TestConfig.class)
+    class CacheLayerTest {
+
+        @Configuration
+        @EnableCaching
+        static class TestConfig {
+
+            @Bean
+            public CacheManager cacheManager() {
+                return new ConcurrentMapCacheManager("yearly:price");
+            }
+
+            @Bean
+            public YearlyPriceMapper yearlyPriceMapper() {
+                return Mockito.mock(YearlyPriceMapper.class);
+            }
+
+            @Bean
+            public YearlyPriceService yearlyPriceService(YearlyPriceMapper yearlyPriceMapper) {
+                return new YearlyPriceService(yearlyPriceMapper);
+            }
+        }
+
+        @Autowired
+        YearlyPriceMapper yearlyPriceMapper;
+
+        @Autowired
+        YearlyPriceService yearlyPriceService;
+
+        @Autowired
+        CacheManager cacheManager;
+
+        private final int currentYear = LocalDate.now().getYear();
+        private final int pastYear = currentYear - 2;
+
+        @BeforeEach
+        void resetMocksAndCaches() {
+            Mockito.reset(yearlyPriceMapper);
+            cacheManager.getCacheNames().forEach(name -> cacheManager.getCache(name).clear());
+        }
+
+        @Test
+        @DisplayName("getPrices: 과거 endYear 기간 조회 시 두 번째 호출은 캐시에서 반환 (매퍼 1회 호출)")
+        void getPrices_과거endYear_캐시히트() {
+            String productCode = "PROD001";
+            // endYear(pastYear) < currentYear → 조건 충족 → 캐시 적용
+            given(yearlyPriceMapper.getPriceDuration(productCode, pastYear - 1, pastYear))
+                    .willReturn(Collections.emptyList());
+
+            yearlyPriceService.getPrices(productCode, pastYear - 1, pastYear);
+            yearlyPriceService.getPrices(productCode, pastYear - 1, pastYear);
+
+            verify(yearlyPriceMapper, times(1)).getPriceDuration(productCode, pastYear - 1, pastYear);
+        }
+
+        @Test
+        @DisplayName("getPrices: 올해 endYear 기간 조회 시 캐시 조건 미충족으로 매퍼 매번 호출")
+        void getPrices_올해endYear_캐시조건_미충족() {
+            String productCode = "PROD001";
+            // endYear == currentYear → 조건 미충족 → 캐시 미적용
+            given(yearlyPriceMapper.getPriceDuration(productCode, pastYear, currentYear))
+                    .willReturn(Collections.emptyList());
+
+            yearlyPriceService.getPrices(productCode, pastYear, currentYear);
+            yearlyPriceService.getPrices(productCode, pastYear, currentYear);
+
+            verify(yearlyPriceMapper, times(2)).getPriceDuration(productCode, pastYear, currentYear);
+        }
+
+        @Test
+        @DisplayName("getPrice: 과거 targetYear 조회 시 두 번째 호출은 캐시에서 반환 (매퍼 1회 호출)")
+        void getPrice_과거targetYear_캐시히트() {
+            String productCode = "PROD001";
+            // targetYear(pastYear) < currentYear → 조건 충족 → 캐시 적용
+            YearlyPriceResponseDto.PriceDto dto = YearlyPriceResponseDto.PriceDto.builder()
+                    .priceYear(pastYear).avgPrice(100000L).build();
+            given(yearlyPriceMapper.getPriceSpecification(productCode, pastYear)).willReturn(dto);
+
+            yearlyPriceService.getPrice(productCode, pastYear);
+            yearlyPriceService.getPrice(productCode, pastYear);
+
+            verify(yearlyPriceMapper, times(1)).getPriceSpecification(productCode, pastYear);
+        }
+
+        @Test
+        @DisplayName("getPrice: 올해 targetYear 조회 시 캐시 조건 미충족으로 매퍼 매번 호출")
+        void getPrice_올해targetYear_캐시조건_미충족() {
+            String productCode = "PROD001";
+            // targetYear == currentYear → 조건 미충족 → 캐시 미적용
+            given(yearlyPriceMapper.getPriceSpecification(productCode, currentYear)).willReturn(null);
+
+            yearlyPriceService.getPrice(productCode, currentYear);
+            yearlyPriceService.getPrice(productCode, currentYear);
+
+            verify(yearlyPriceMapper, times(2)).getPriceSpecification(productCode, currentYear);
+        }
+
+        @Test
+        @DisplayName("getPrices와 getPrice는 같은 캐시('yearly:price')를 공유하지 않음 (키가 다름)")
+        void getPrices와_getPrice_캐시키_독립성() {
+            String productCode = "PROD001";
+            // getPrices 키: "PROD001:2022:2023", getPrice 키: "PROD001:2022" → 서로 다른 키
+            given(yearlyPriceMapper.getPriceDuration(productCode, pastYear, pastYear))
+                    .willReturn(Collections.emptyList());
+            given(yearlyPriceMapper.getPriceSpecification(productCode, pastYear)).willReturn(null);
+
+            yearlyPriceService.getPrices(productCode, pastYear, pastYear);
+            yearlyPriceService.getPrices(productCode, pastYear, pastYear); // 캐시 히트
+            yearlyPriceService.getPrice(productCode, pastYear);
+            yearlyPriceService.getPrice(productCode, pastYear);            // 캐시 히트
+
+            verify(yearlyPriceMapper, times(1)).getPriceDuration(productCode, pastYear, pastYear);
+            verify(yearlyPriceMapper, times(1)).getPriceSpecification(productCode, pastYear);
+        }
     }
 }

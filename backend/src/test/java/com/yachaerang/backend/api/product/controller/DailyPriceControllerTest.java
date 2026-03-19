@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
@@ -198,7 +199,7 @@ class DailyPriceControllerTest extends RestDocsSupport {
     @DisplayName("[GET] /api/v1/daily-prices/rank/high-prices")
     public void getHighPrices() throws Exception {
         // given
-        given(dailyPriceService.getHighPriceRank())
+        given(dailyPriceService.getHighPriceRank(any(LocalDate.class)))
                 .willReturn(rankList1);
         // when & then
         mockMvc.perform(get("/api/v1/daily-prices/rank/high-prices")
@@ -227,7 +228,7 @@ class DailyPriceControllerTest extends RestDocsSupport {
     @DisplayName("[GET] /api/v1/daily-prices/rank/low-prices")
     public void getLowPrices() throws Exception {
         // given
-        given(dailyPriceService.getLowPriceRank())
+        given(dailyPriceService.getLowPriceRank(any(LocalDate.class)))
                 .willReturn(rankList2);
         // when & then
         mockMvc.perform(get("/api/v1/daily-prices/rank/low-prices")

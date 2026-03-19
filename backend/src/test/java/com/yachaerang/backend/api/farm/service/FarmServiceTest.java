@@ -208,4 +208,55 @@ class FarmServiceTest {
                     assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.FARM_NOT_FOUND);
                 });
     }
+
+    @Test
+    @DisplayName("농장 정보 저장 실패 - 이미 존재하는 농장")
+    void 농장정보_저장_실패_이미존재하는_농장() {
+        // given
+        FarmRequestDto.InfoDto requestDto = createRequestDto();
+        FarmResponseDto.EvaluateDto evaluationDto = new FarmResponseDto.EvaluateDto("A", "좋은 유형", "좋은 농장입니다");
+        Farm existingFarm = createFarm();
+
+        when(farmEvaluationService.generateGradeAndComment(requestDto))
+                .thenReturn(CompletableFuture.completedFuture(evaluationDto));
+        when(farmMapper.findByMemberId(MEMBER_ID)).thenReturn(existingFarm);
+
+        // when
+        CompletableFuture<FarmResponseDto.InfoDto> result = farmService.saveFarmInfo(requestDto);
+
+        // then
+        assertThatThrownBy(result::join)
+                .isInstanceOf(CompletionException.class)
+                .cause()
+                .isInstanceOf(GeneralException.class)
+                .satisfies(e -> {
+                    GeneralException exception = (GeneralException) e;
+                    assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.FARM_ALREADY_EXISTS);
+                });
+    }
+
+    @Test
+    @DisplayName("농장 정보 수정 실패 - AI 평가 실패")
+    void 농장정보_수정_실패_AI평가_실패() {
+        // given
+        FarmRequestDto.InfoDto requestDto = createRequestDto();
+        Farm existingFarm = createFarm();
+
+        when(farmMapper.findByMemberId(MEMBER_ID)).thenReturn(existingFarm);
+        when(farmEvaluationService.generateGradeAndComment(requestDto))
+                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("AI 서비스 오류")));
+
+        // when
+        CompletableFuture<FarmResponseDto.InfoDto> result = farmService.updateFarmInfo(requestDto);
+
+        // then
+        assertThatThrownBy(result::join)
+                .isInstanceOf(CompletionException.class)
+                .cause()
+                .isInstanceOf(GeneralException.class)
+                .satisfies(e -> {
+                    GeneralException exception = (GeneralException) e;
+                    assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.FARM_UPDATE_FAILED);
+                });
+    }
 }

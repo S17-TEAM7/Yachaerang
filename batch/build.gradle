@@ -58,8 +58,10 @@ dependencies {
     // actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // prometheus
+    // Metric
     implementation 'io.micrometer:micrometer-registry-prometheus-simpleclient'
+
+    // pushgateway
     implementation 'io.prometheus:simpleclient_pushgateway'
 }
 

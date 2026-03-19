@@ -2,23 +2,30 @@ package com.yachaerang.backend.api.product.service;
 
 import com.yachaerang.backend.api.product.dto.response.ProductResponseDto;
 import com.yachaerang.backend.api.product.repository.ProductMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-@Transactional
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
@@ -81,7 +88,6 @@ class ProductServiceTest {
         verify(productMapper).findAllItemNameAndItemCodes();
         verifyNoMoreInteractions(productMapper);
     }
-
 
     @Test
     @DisplayName("제품 목록 하위부류까지 반환 성공")
@@ -188,5 +194,110 @@ class ProductServiceTest {
 
         // then
         verify(productMapper).findProductNameByItemCode(eq("ITEM001"));
+    }
+
+    // ─── 캐시 레이어 테스트 ────────────────────────────────────────────────────
+    @Nested
+    @ExtendWith(SpringExtension.class)
+    @ContextConfiguration(classes = CacheLayerTest.TestConfig.class)
+    class CacheLayerTest {
+
+        @Configuration
+        @EnableCaching
+        static class TestConfig {
+
+            @Bean
+            public CacheManager cacheManager() {
+                return new ConcurrentMapCacheManager("product:itemNames", "product:subItems");
+            }
+
+            @Bean
+            public ProductMapper productMapper() {
+                return Mockito.mock(ProductMapper.class);
+            }
+
+            @Bean
+            public ProductService productService(ProductMapper productMapper) {
+                return new ProductService(productMapper);
+            }
+        }
+
+        @Autowired
+        ProductMapper productMapper;
+
+        @Autowired
+        ProductService productService;
+
+        @Autowired
+        CacheManager cacheManager;
+
+        @BeforeEach
+        void resetMocksAndCaches() {
+            Mockito.reset(productMapper);
+            cacheManager.getCacheNames().forEach(name -> cacheManager.getCache(name).clear());
+        }
+
+        @Test
+        @DisplayName("getItemNames: 두 번 호출해도 매퍼 1회만 호출 (캐시 히트)")
+        void getItemNames_두번호출_캐시히트() {
+            List<ProductResponseDto.ItemDto> data = List.of(
+                    ProductResponseDto.ItemDto.builder().itemCode("ITEM001").itemName("과일").build()
+            );
+            given(productMapper.findAllItemNameAndItemCodes()).willReturn(data);
+
+            productService.getItemNames();
+            productService.getItemNames();
+
+            verify(productMapper, times(1)).findAllItemNameAndItemCodes();
+        }
+
+        @Test
+        @DisplayName("getProductNames: 동일 itemCode 반복 호출 시 매퍼 1회만 호출 (캐시 히트)")
+        void getProductNames_동일itemCode_캐시히트() {
+            String itemCode = "ITEM001";
+            List<ProductResponseDto.SubItemDto> data = List.of(
+                    ProductResponseDto.SubItemDto.builder()
+                            .productCode("PROD001").name("사과").itemCode(itemCode)
+                            .itemName("과일").kindName("사과").kindCode("K001")
+                            .productRank("특").rankCode("R001").build()
+            );
+            given(productMapper.findProductNameByItemCode(itemCode)).willReturn(data);
+
+            productService.getProductNames(itemCode);
+            productService.getProductNames(itemCode);
+
+            verify(productMapper, times(1)).findProductNameByItemCode(itemCode);
+        }
+
+        @Test
+        @DisplayName("getProductNames: 다른 itemCode는 별도 캐시 키 → 각각 매퍼 호출")
+        void getProductNames_다른itemCode_별도캐시키() {
+            String itemCode1 = "ITEM001";
+            String itemCode2 = "ITEM002";
+
+            given(productMapper.findProductNameByItemCode(itemCode1)).willReturn(Collections.emptyList());
+            given(productMapper.findProductNameByItemCode(itemCode2)).willReturn(Collections.emptyList());
+
+            productService.getProductNames(itemCode1);
+            productService.getProductNames(itemCode2);
+
+            verify(productMapper, times(1)).findProductNameByItemCode(itemCode1);
+            verify(productMapper, times(1)).findProductNameByItemCode(itemCode2);
+        }
+
+        @Test
+        @DisplayName("getItemNames 캐시와 getProductNames 캐시는 독립적으로 동작")
+        void itemNames캐시와_subItems캐시_독립동작() {
+            given(productMapper.findAllItemNameAndItemCodes()).willReturn(Collections.emptyList());
+            given(productMapper.findProductNameByItemCode(anyString())).willReturn(Collections.emptyList());
+
+            productService.getItemNames();
+            productService.getItemNames();       // 캐시 히트
+            productService.getProductNames("ITEM001");
+            productService.getProductNames("ITEM001"); // 캐시 히트
+
+            verify(productMapper, times(1)).findAllItemNameAndItemCodes();
+            verify(productMapper, times(1)).findProductNameByItemCode("ITEM001");
+        }
     }
 }
