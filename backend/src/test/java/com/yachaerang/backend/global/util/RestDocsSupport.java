@@ -36,8 +36,12 @@ public abstract class RestDocsSupport {
         return new Filter[0];
     }
 
+    protected boolean isPrintEnabled() {
+        return true;
+    }
+
     @BeforeEach
-    void setUp(RestDocumentationContextProvider provider) {
+    protected void setUp(RestDocumentationContextProvider provider) {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -48,16 +52,19 @@ public abstract class RestDocsSupport {
         StandaloneMockMvcBuilder builder = MockMvcBuilders
                 .standaloneSetup(initController())
                 .setMessageConverters(jacksonConverter)
-                .addFilters(new CharacterEncodingFilter("UTF-8", true))
-                .alwaysDo(print());
+                .addFilters(new CharacterEncodingFilter("UTF-8", true));
+
+        if (isPrintEnabled()) {
+            builder.alwaysDo(print());
+        }
 
         Object[] advices = initControllerAdvices();
-        if (advices != null && advices.length > 0) {
+        if (advices.length > 0) {
             builder.setControllerAdvice(advices);
         }
 
         Filter[] filters = initFilters();
-        if (filters != null && filters.length > 0) {
+        if (filters.length > 0) {
             builder.addFilters(filters);
         }
 

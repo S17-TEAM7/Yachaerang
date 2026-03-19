@@ -41,5 +41,6 @@ public final class SecurityPaths {
      * 관리자 서비스
      */
     public static final String[] ADMIN = {
+            "/api/batch/**",
     };
 }

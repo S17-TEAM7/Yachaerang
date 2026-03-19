@@ -50,18 +50,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cat << 'EOF' > /home/ubuntu/deploy/nginx.conf
-            ${{ secrets.NGINX_CONF }}
-            EOF
-            
             echo "${{ secrets.ENV_FILE_CONTENTS }}" > /home/ubuntu/deploy/.env
-            
+
             echo "${{ secrets.YY_GITHUB_PAT }}" | docker login ghcr.io -u ${{ secrets.YY_GITHUB_USERNAME }} --password-stdin
-            
-            docker pull ghcr.io/${{ secrets.ORG_NAME }}/spring-api:latest
-            
+
             export ORG_NAME=${{ secrets.ORG_NAME }}
-            
+
+            docker pull ghcr.io/${{ secrets.ORG_NAME }}/spring-batch:latest
+
             cd /home/ubuntu/deploy
             docker compose -f docker-compose.dev.yaml down spring-batch
             docker compose -f docker-compose.dev.yaml up -d spring-batch
