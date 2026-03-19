@@ -20,7 +20,7 @@ public class WebClientBatchHttpTemplate implements BatchHttpTemplate {
 
     private final WebClient batchWebClient;
 
-    private static final Duration TIMEOUT = Duration.ofMillis(10000);
+    private static final Duration TIMEOUT = Duration.ofMillis(60000);
 
     @Override
     public <T> T get(String path, Class<T> type, UnaryOperator<UriBuilder> params) {
