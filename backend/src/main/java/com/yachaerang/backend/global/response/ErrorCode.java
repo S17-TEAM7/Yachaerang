@@ -109,6 +109,8 @@ public enum ErrorCode implements BaseCode{
     BATCH_CALL_FAILED(HttpStatus.BAD_GATEWAY, "BATCH_001", "배치 서버 호출에 실패했습니다."),
     BATCH_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "BATCH_002", "배치 서버 응답이 지연되고 있습니다."),
     BATCH_CONNECTION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "BATCH_003", "배치 서버에 연결할 수 없습니다."),
+    BATCH_BAD_REQUEST(HttpStatus.BAD_REQUEST, "BATCH_004", "배치 서버 요청이 잘못되었습니다."),
+    BATCH_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "BATCH_005", "배치 서버 내부 오류가 발생했습니다."),
 
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500ERROR", "서버에서 장애가 일어났습니다."),

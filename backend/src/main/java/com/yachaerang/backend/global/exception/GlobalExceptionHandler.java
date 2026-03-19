@@ -36,22 +36,19 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<ApiResponse<?>> handlerCustomException(CustomException ex) {
         ErrorCode errorCode = ex.getErrorCode();
         return ResponseEntity.ok(
-                ApiResponse.failure(errorCode)
-        );
+                ApiResponse.failure(errorCode));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<ErrorResponse> handleAccessDenied(
-            AccessDeniedException ex, HttpServletRequest request
-    ) {
+            AccessDeniedException ex, HttpServletRequest request) {
         logError(ex, request);
         return ErrorResponse.of(ErrorCode.UNAUTHORIZED_ACCESS);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex, HttpServletRequest request
-    ) {
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
         logError(ex, request);
         return ErrorResponse.of(ErrorCode.UNMATCHED_REQUEST);
     }
@@ -63,7 +60,7 @@ public class GlobalExceptionHandler {
     }
 
     /*
-    Error 기록을 위한 logError
+     * Error 기록을 위한 logError
      */
     private void logError(Exception e, HttpServletRequest request) {
         log.error("Request URI : [{}] {}", request.getMethod(), request.getRequestURI());

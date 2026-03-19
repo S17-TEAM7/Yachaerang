@@ -44,12 +44,16 @@ public class WebClientBatchHttpTemplate implements BatchHttpTemplate {
 
     private <T> T execute(WebClient.ResponseSpec spec, String uri, Class<T> type) {
         return spec
-                .onStatus(HttpStatusCode::is4xxClientError, r ->
-                        r.bodyToMono(String.class).map(b -> BatchException.of(ErrorCode.BATCH_CALL_FAILED)))
-                .onStatus(HttpStatusCode::is5xxServerError, r ->
-                        r.bodyToMono(String.class).map(b -> BatchException.of(ErrorCode.BATCH_CALL_FAILED)))
+                .onStatus(HttpStatusCode::is4xxClientError, r -> r.bodyToMono(String.class)
+                        .defaultIfEmpty("No Exception Body")
+                        .map(body -> BatchException.of(ErrorCode.BATCH_BAD_REQUEST)))
+                .onStatus(HttpStatusCode::is5xxServerError, r -> r.bodyToMono(String.class)
+                        .defaultIfEmpty("No Exception Body")
+                        .map(body -> BatchException.of(ErrorCode.BATCH_SERVER_ERROR)))
                 .bodyToMono(type)
                 .timeout(TIMEOUT, Mono.error(BatchException.of(ErrorCode.BATCH_TIMEOUT)))
+                .onErrorMap(org.springframework.web.reactive.function.client.WebClientException.class,
+                        ex -> BatchException.of(ErrorCode.BATCH_CONNECTION_FAILED))
                 .block();
     }
 }
