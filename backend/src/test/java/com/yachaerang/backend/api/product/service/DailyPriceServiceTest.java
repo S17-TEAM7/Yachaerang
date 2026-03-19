@@ -2,22 +2,28 @@ package com.yachaerang.backend.api.product.service;
 
 import com.yachaerang.backend.api.product.dto.response.DailyPriceResponseDto;
 import com.yachaerang.backend.api.product.repository.DailyPriceMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.List;
-
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -33,10 +39,7 @@ class DailyPriceServiceTest {
     @InjectMocks
     DailyPriceService dailyPriceService;
 
-    private static final ZoneId SEOUL_ZONE = ZoneId.of("Asia/Seoul");
-    private static final ZonedDateTime FIXED_NOW = ZonedDateTime.of(
-            2024, 1, 15, 10, 0, 0, 0, SEOUL_ZONE
-    );
+    // 리팩터링 후 날짜 계산은 컨트롤러에서 수행하며, 서비스는 date 파라미터를 받음
     private static final LocalDate YESTERDAY = LocalDate.of(2024, 1, 14);
 
     private List<DailyPriceResponseDto.RankDto> createDescendingMockData() {
@@ -192,64 +195,180 @@ class DailyPriceServiceTest {
     @Test
     @DisplayName("어제 날짜를 기준으로 가격 내림차순")
     void 어제날짜를_기준으로_가격_내림차순() {
-        try (MockedStatic<ZonedDateTime> mockedZonedDateTime = mockStatic(ZonedDateTime.class, CALLS_REAL_METHODS)) {
-            // given
-            // any(ZoneId.class)를 사용하여 ZoneId 매칭 문제 해결
-            mockedZonedDateTime.when(() -> ZonedDateTime.now(any(ZoneId.class)))
-                    .thenReturn(FIXED_NOW);
+        // given - 날짜 계산은 컨트롤러에서 수행 후 파라미터로 전달
+        given(dailyPriceMapper.getPricesDescending(YESTERDAY))
+                .willReturn(createDescendingMockData());
 
-            given(dailyPriceMapper.getPricesDescending(YESTERDAY))
-                    .willReturn(createDescendingMockData());
+        // when
+        List<DailyPriceResponseDto.RankDto> result = dailyPriceService.getHighPriceRank(YESTERDAY);
 
-            // when
-            List<DailyPriceResponseDto.RankDto> result = dailyPriceService.getHighPriceRank();
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getProductName()).isEqualTo("수박");
+        assertThat(result.get(0).getPrice()).isEqualTo(20000);
 
-            // then
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).getProductName()).isEqualTo("수박");
-            assertThat(result.get(0).getPrice()).isEqualTo(20000);
-
-            verify(dailyPriceMapper).getPricesDescending(YESTERDAY);
-        }
+        verify(dailyPriceMapper).getPricesDescending(YESTERDAY);
     }
 
     @Test
     @DisplayName("데이터가 없으면 빈 리스트")
     void 데이터가_없으면_빈리스트() {
-        try (MockedStatic<ZonedDateTime> mockedZonedDateTime = mockStatic(ZonedDateTime.class, CALLS_REAL_METHODS)) {
-            // given
-            mockedZonedDateTime.when(() -> ZonedDateTime.now(SEOUL_ZONE)).thenReturn(FIXED_NOW);
+        // given
+        given(dailyPriceMapper.getPricesDescending(YESTERDAY))
+                .willReturn(Collections.emptyList());
 
-            given(dailyPriceMapper.getPricesDescending(YESTERDAY))
-                    .willReturn(Collections.emptyList());
+        // when
+        List<DailyPriceResponseDto.RankDto> result = dailyPriceService.getHighPriceRank(YESTERDAY);
 
-            // when
-            List<DailyPriceResponseDto.RankDto> result = dailyPriceService.getHighPriceRank();
-
-            // then
-            assertThat(result).isEmpty();
-        }
+        // then
+        assertThat(result).isEmpty();
     }
 
     @Test
     @DisplayName("어제 날짜를 기준으로 가격 오름차순")
     void 어제날짜를_기준으로_가격_오름차순() {
-        try (MockedStatic<ZonedDateTime> mockedZonedDateTime = mockStatic(ZonedDateTime.class, CALLS_REAL_METHODS)) {
-            // given
-            mockedZonedDateTime.when(() -> ZonedDateTime.now(SEOUL_ZONE)).thenReturn(FIXED_NOW);
+        // given
+        given(dailyPriceMapper.getPricesAscending(YESTERDAY))
+                .willReturn(createAscendingMockData());
 
-            given(dailyPriceMapper.getPricesAscending(YESTERDAY))
-                    .willReturn(createAscendingMockData());
+        // when
+        List<DailyPriceResponseDto.RankDto> result = dailyPriceService.getLowPriceRank(YESTERDAY);
 
-            // when
-            List<DailyPriceResponseDto.RankDto> result = dailyPriceService.getLowPriceRank();
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getProductName()).isEqualTo("감귤");
+        assertThat(result.get(0).getPrice()).isEqualTo(2000L);
 
-            // then
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).getProductName()).isEqualTo("감귤");
-            assertThat(result.get(0).getPrice()).isEqualTo(2000L);
+        verify(dailyPriceMapper).getPricesAscending(YESTERDAY);
+    }
 
-            verify(dailyPriceMapper).getPricesAscending(YESTERDAY);
+    // ─── 캐시 레이어 테스트 ────────────────────────────────────────────────────
+    // @Cacheable AOP는 Spring 프록시가 있어야 동작하므로 SpringExtension + ConcurrentMapCache 사용
+    @Nested
+    @ExtendWith(SpringExtension.class)
+    @ContextConfiguration(classes = CacheLayerTest.TestConfig.class)
+    class CacheLayerTest {
+
+        @Configuration
+        @EnableCaching
+        static class TestConfig {
+
+            @Bean
+            public CacheManager cacheManager() {
+                return new ConcurrentMapCacheManager(
+                        "daily:price", "daily:rank:high", "daily:rank:low");
+            }
+
+            @Bean
+            public DailyPriceMapper dailyPriceMapper() {
+                return Mockito.mock(DailyPriceMapper.class);
+            }
+
+            @Bean
+            public DailyPriceService dailyPriceService(DailyPriceMapper dailyPriceMapper) {
+                return new DailyPriceService(dailyPriceMapper);
+            }
+        }
+
+        @Autowired
+        DailyPriceMapper dailyPriceMapper;
+
+        @Autowired
+        DailyPriceService dailyPriceService;
+
+        @Autowired
+        CacheManager cacheManager;
+
+        @BeforeEach
+        void resetMocksAndCaches() {
+            Mockito.reset(dailyPriceMapper);
+            cacheManager.getCacheNames().forEach(name -> cacheManager.getCache(name).clear());
+        }
+
+        @Test
+        @DisplayName("과거 기간 조회: 두 번째 호출은 캐시에서 반환 (매퍼 1회 호출)")
+        void 과거기간_두번째호출_캐시히트() {
+            String productCode = "PROD001";
+            LocalDate startDate = LocalDate.of(2024, 1, 1);
+            LocalDate endDate = LocalDate.of(2024, 1, 31); // 과거 → condition = true → 캐시 적용
+
+            List<DailyPriceResponseDto.PriceRecordDto> data = List.of(
+                    DailyPriceResponseDto.PriceRecordDto.builder()
+                            .priceDate(startDate).price(10000L).build()
+            );
+            given(dailyPriceMapper.getPriceDuration(productCode, startDate, endDate)).willReturn(data);
+
+            dailyPriceService.getDailyPrice(productCode, startDate, endDate); // 캐시 미스 → 매퍼 호출
+            dailyPriceService.getDailyPrice(productCode, startDate, endDate); // 캐시 히트 → 매퍼 미호출
+
+            verify(dailyPriceMapper, times(1)).getPriceDuration(productCode, startDate, endDate);
+        }
+
+        @Test
+        @DisplayName("오늘 날짜가 endDate인 기간: 캐시 조건 미충족으로 매퍼 매번 호출")
+        void 오늘이_endDate인_기간_캐시조건_미충족() {
+            String productCode = "PROD001";
+            LocalDate startDate = LocalDate.of(2024, 1, 1);
+            LocalDate endDate = LocalDate.now(); // 오늘 → endDate.isBefore(now) = false → 캐시 미적용
+
+            given(dailyPriceMapper.getPriceDuration(productCode, startDate, endDate))
+                    .willReturn(Collections.emptyList());
+
+            dailyPriceService.getDailyPrice(productCode, startDate, endDate);
+            dailyPriceService.getDailyPrice(productCode, startDate, endDate);
+
+            verify(dailyPriceMapper, times(2)).getPriceDuration(productCode, startDate, endDate);
+        }
+
+        @Test
+        @DisplayName("랭크 조회: 동일 날짜 두 번 호출 시 캐시 히트 (매퍼 1회 호출)")
+        void 랭크조회_동일날짜_캐시히트() {
+            LocalDate date = LocalDate.of(2024, 1, 14);
+            List<DailyPriceResponseDto.RankDto> data = List.of(
+                    DailyPriceResponseDto.RankDto.builder()
+                            .productCode("APPLE").productName("사과")
+                            .itemName("과일").kindName("사과")
+                            .unit("kg").price(5000L).build()
+            );
+            given(dailyPriceMapper.getPricesDescending(date)).willReturn(data);
+
+            dailyPriceService.getHighPriceRank(date);
+            dailyPriceService.getHighPriceRank(date);
+
+            verify(dailyPriceMapper, times(1)).getPricesDescending(date);
+        }
+
+        @Test
+        @DisplayName("랭크 조회: 다른 날짜는 별도 캐시 키 → 각각 매퍼 호출")
+        void 랭크조회_다른날짜_별도캐시키() {
+            LocalDate date1 = LocalDate.of(2024, 1, 13);
+            LocalDate date2 = LocalDate.of(2024, 1, 14);
+
+            given(dailyPriceMapper.getPricesDescending(date1)).willReturn(Collections.emptyList());
+            given(dailyPriceMapper.getPricesDescending(date2)).willReturn(Collections.emptyList());
+
+            dailyPriceService.getHighPriceRank(date1);
+            dailyPriceService.getHighPriceRank(date2);
+
+            verify(dailyPriceMapper, times(1)).getPricesDescending(date1);
+            verify(dailyPriceMapper, times(1)).getPricesDescending(date2);
+        }
+
+        @Test
+        @DisplayName("내림차순·오름차순 랭크는 별도 캐시('daily:rank:high', 'daily:rank:low') 사용")
+        void 고가랭크_저가랭크_별도캐시() {
+            LocalDate date = LocalDate.of(2024, 1, 14);
+
+            given(dailyPriceMapper.getPricesDescending(date)).willReturn(Collections.emptyList());
+            given(dailyPriceMapper.getPricesAscending(date)).willReturn(Collections.emptyList());
+
+            dailyPriceService.getHighPriceRank(date);
+            dailyPriceService.getHighPriceRank(date); // 캐시 히트
+            dailyPriceService.getLowPriceRank(date);
+            dailyPriceService.getLowPriceRank(date);  // 캐시 히트
+
+            verify(dailyPriceMapper, times(1)).getPricesDescending(date);
+            verify(dailyPriceMapper, times(1)).getPricesAscending(date);
         }
     }
 }

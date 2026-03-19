@@ -1,30 +1,38 @@
 package com.yachaerang.backend.api.product.service;
 
 import com.yachaerang.backend.api.product.dto.response.WeeklyPriceResponseDto;
-import com.yachaerang.backend.api.product.entity.WeeklyPrice;
 import com.yachaerang.backend.api.product.repository.WeeklyPriceMapper;
 import com.yachaerang.backend.global.exception.CustomException;
 import com.yachaerang.backend.global.exception.GeneralException;
 import com.yachaerang.backend.global.response.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.WeekFields;
-import java.util.List;
-
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @Transactional
@@ -134,7 +142,6 @@ class WeeklyPriceServiceTest {
                 });
         verify(weeklyPriceMapper, never()).getPriceDuration(any(), any(), any());
     }
-
 
     @Test
     @DisplayName("주간의 시작일과 종료일 성공")
@@ -429,5 +436,109 @@ class WeeklyPriceServiceTest {
                 });
 
         verify(weeklyPriceMapper, never()).getPriceDuration(any(), any(), any());
+    }
+
+    // ─── 캐시 레이어 테스트 ────────────────────────────────────────────────────
+    // WeeklyPriceService 캐시 조건: endDate.isBefore(now)
+    // 서비스 자체 검증: endDate.isAfter(today) → 예외 발생
+    // → endDate == today(일요일)일 때만 캐시 미적용 시나리오가 유효하므로, 과거 주간(캐시 적용)만 검증
+    @Nested
+    @ExtendWith(SpringExtension.class)
+    @ContextConfiguration(classes = WeeklyPriceServiceTest.CacheLayerTest.TestConfig.class)
+    class CacheLayerTest {
+
+        @Configuration
+        @EnableCaching
+        static class TestConfig {
+
+            @Bean
+            public CacheManager cacheManager() {
+                return new ConcurrentMapCacheManager("weekly:price");
+            }
+
+            @Bean
+            public WeeklyPriceMapper weeklyPriceMapper() {
+                return Mockito.mock(WeeklyPriceMapper.class);
+            }
+
+            @Bean
+            public WeeklyPriceService weeklyPriceService(WeeklyPriceMapper weeklyPriceMapper) {
+                return new WeeklyPriceService(weeklyPriceMapper);
+            }
+        }
+
+        @Autowired
+        WeeklyPriceMapper weeklyPriceMapper;
+
+        @Autowired
+        WeeklyPriceService weeklyPriceService;
+
+        @Autowired
+        CacheManager cacheManager;
+
+        // 2025-11-10(월) ~ 2025-11-16(일): 과거 주간, 날짜 검증 통과
+        private static final LocalDate PAST_START = LocalDate.of(2025, 11, 10);
+        private static final LocalDate PAST_END = LocalDate.of(2025, 11, 16);
+
+        @BeforeEach
+        void resetMocksAndCaches() {
+            Mockito.reset(weeklyPriceMapper);
+            cacheManager.getCacheNames().forEach(name -> cacheManager.getCache(name).clear());
+        }
+
+        @Test
+        @DisplayName("과거 주간 조회: 두 번째 호출은 캐시에서 반환 (매퍼 1회 호출)")
+        void 과거주간_두번째호출_캐시히트() {
+            String productCode = "PROD001";
+            List<WeeklyPriceResponseDto.PriceRecordDto> data = List.of(
+                    WeeklyPriceResponseDto.PriceRecordDto.builder()
+                            .startDate(PAST_START).endDate(PAST_END)
+                            .avgPrice(10000L).minPrice(8000L).maxPrice(12000L).build()
+            );
+            given(weeklyPriceMapper.getPriceDuration(productCode, PAST_START, PAST_END)).willReturn(data);
+
+            weeklyPriceService.getPriceDuration(productCode, PAST_START, PAST_END); // 캐시 미스
+            weeklyPriceService.getPriceDuration(productCode, PAST_START, PAST_END); // 캐시 히트
+
+            verify(weeklyPriceMapper, times(1)).getPriceDuration(productCode, PAST_START, PAST_END);
+        }
+
+        @Test
+        @DisplayName("다른 productCode는 별도 캐시 키 → 각각 매퍼 호출")
+        void 다른productCode_별도캐시키() {
+            String productCode1 = "PROD001";
+            String productCode2 = "PROD002";
+
+            given(weeklyPriceMapper.getPriceDuration(productCode1, PAST_START, PAST_END))
+                    .willReturn(Collections.emptyList());
+            given(weeklyPriceMapper.getPriceDuration(productCode2, PAST_START, PAST_END))
+                    .willReturn(Collections.emptyList());
+
+            weeklyPriceService.getPriceDuration(productCode1, PAST_START, PAST_END);
+            weeklyPriceService.getPriceDuration(productCode2, PAST_START, PAST_END);
+
+            verify(weeklyPriceMapper, times(1)).getPriceDuration(productCode1, PAST_START, PAST_END);
+            verify(weeklyPriceMapper, times(1)).getPriceDuration(productCode2, PAST_START, PAST_END);
+        }
+
+        @Test
+        @DisplayName("다른 기간은 별도 캐시 키 → 각각 매퍼 호출")
+        void 다른기간_별도캐시키() {
+            String productCode = "PROD001";
+            // 2025-11-03(월) ~ 2025-11-09(일): 또 다른 과거 주간
+            LocalDate otherStart = LocalDate.of(2025, 11, 3);
+            LocalDate otherEnd = LocalDate.of(2025, 11, 9);
+
+            given(weeklyPriceMapper.getPriceDuration(productCode, PAST_START, PAST_END))
+                    .willReturn(Collections.emptyList());
+            given(weeklyPriceMapper.getPriceDuration(productCode, otherStart, otherEnd))
+                    .willReturn(Collections.emptyList());
+
+            weeklyPriceService.getPriceDuration(productCode, PAST_START, PAST_END);
+            weeklyPriceService.getPriceDuration(productCode, otherStart, otherEnd);
+
+            verify(weeklyPriceMapper, times(1)).getPriceDuration(productCode, PAST_START, PAST_END);
+            verify(weeklyPriceMapper, times(1)).getPriceDuration(productCode, otherStart, otherEnd);
+        }
     }
 }
