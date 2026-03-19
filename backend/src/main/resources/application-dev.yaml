@@ -44,6 +44,6 @@ management:
 
 batch:
   client:
-    base-url: http://batch:8082
+    base-url: http://spring-batch:8082
     connect-timeout-ms: 3000
     read-timeout-ms: 10000
