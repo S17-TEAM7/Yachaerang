@@ -144,4 +144,27 @@ class AuthenticatedMemberProviderTest {
         assertThatThrownBy(() -> authenticatedMemberProvider.getCurrentMemberId())
                 .isInstanceOf(GeneralException.class);
     }
+
+    @Test
+    @DisplayName("UsernamePasswordAuthenticationToken이면 isAuthenticated는 true")
+    void isAuthenticated_인증된_경우_true() {
+        // given
+        Member member = Member.builder().id(1L).email("test@example.com").build();
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                member, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // when & then
+        assertThat(authenticatedMemberProvider.isAuthenticated()).isTrue();
+    }
+
+    @Test
+    @DisplayName("UsernamePasswordAuthenticationToken이 아니면 isAuthenticated는 false")
+    void isAuthenticated_미인증_경우_false() {
+        // given
+        SecurityContextHolder.getContext().setAuthentication(null);
+
+        // when & then
+        assertThat(authenticatedMemberProvider.isAuthenticated()).isFalse();
+    }
 }

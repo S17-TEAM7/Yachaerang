@@ -362,4 +362,159 @@ class MemberServiceTest {
 
         then(s3FileService).should().upload(eq(file), argThat(filename -> !filename.contains(".")));
     }
+
+    @Test
+    @DisplayName("프로필 사진 업로드 실패 - 파일이 null")
+    void 프로필_사진_업로드_실패_파일null() {
+        // given
+        given(authenticatedMemberProvider.getCurrentMemberId()).willReturn(1L);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.uploadProfileImage(null))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(e -> assertThat(((GeneralException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.MEMBER_PROFILE_IMAGE));
+    }
+
+    @Test
+    @DisplayName("프로필 사진 업로드 실패 - 빈 파일")
+    void 프로필_사진_업로드_실패_빈파일() {
+        // given
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(true);
+        given(authenticatedMemberProvider.getCurrentMemberId()).willReturn(1L);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.uploadProfileImage(file))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(e -> assertThat(((GeneralException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.MEMBER_PROFILE_IMAGE));
+    }
+
+    @Test
+    @DisplayName("프로필 사진 업로드 실패 - 파일 크기 초과")
+    void 프로필_사진_업로드_실패_파일크기초과() {
+        // given
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(2 * 1024 * 1024L);
+        given(authenticatedMemberProvider.getCurrentMemberId()).willReturn(1L);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.uploadProfileImage(file))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(e -> assertThat(((GeneralException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.PROFILE_IMAGE_TOO_MUCH));
+    }
+
+    @Test
+    @DisplayName("프로필 사진 업로드 실패 - DB 업데이트 실패")
+    void 프로필_사진_업로드_실패_DB업데이트실패() {
+        // given
+        Long memberId = 1L;
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(500 * 1024L);
+        given(file.getOriginalFilename()).willReturn("test.png");
+
+        given(authenticatedMemberProvider.getCurrentMemberId()).willReturn(memberId);
+        given(memberMapper.findImageUrl(memberId)).willReturn(null);
+        given(s3FileService.upload(eq(file), anyString())).willReturn("https://s3.new/image.png");
+        given(memberMapper.updateProfileImage(anyString(), eq(memberId))).willReturn(0);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        // when & then
+        assertThatThrownBy(() -> memberService.uploadProfileImage(file))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(e -> assertThat(((GeneralException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.MEMBER_PROFILE_IMAGE));
+
+        TransactionSynchronizationManager.clearSynchronization();
+    }
+
+    @Test
+    @DisplayName("프로필 사진 업로드 성공 - 기존 이미지 URL이 빈 문자열이면 S3 삭제 안 함")
+    void 프로필_사진_업로드_성공_기존이미지URL빈문자열() {
+        // given
+        Long memberId = 1L;
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.getOriginalFilename()).willReturn("test.png");
+
+        given(authenticatedMemberProvider.getCurrentMemberId()).willReturn(memberId);
+        given(memberMapper.findImageUrl(memberId)).willReturn("");
+        given(s3FileService.upload(eq(file), anyString())).willReturn("https://s3.new/image.png");
+        given(memberMapper.updateProfileImage("https://s3.new/image.png", memberId)).willReturn(1);
+
+        TransactionSynchronizationManager.initSynchronization();
+
+        // when
+        memberService.uploadProfileImage(file);
+
+        // then
+        List<TransactionSynchronization> syncs = TransactionSynchronizationManager.getSynchronizations();
+        syncs.forEach(TransactionSynchronization::afterCommit);
+
+        verify(s3FileService, never()).deleteByUrl(anyString());
+
+        TransactionSynchronizationManager.clearSynchronization();
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 기존 비밀번호 불일치")
+    void 비밀번호_변경_실패_기존비밀번호불일치() {
+        // given
+        String oldPassword = "WrongPassword";
+        String encodedOldPassword = "$2a$10$encodedOldPassword";
+
+        MemberRequestDto.PasswordDto requestDto = MemberRequestDto.PasswordDto.builder()
+                .oldPassword(oldPassword)
+                .newPassword("NewPassword123")
+                .build();
+
+        Member testMember = Member.builder()
+                .email("test@example.com")
+                .password(encodedOldPassword)
+                .build();
+
+        given(authenticatedMemberProvider.getMemberByContextHolder()).willReturn(testMember);
+        given(bCryptPasswordEncoder.matches(oldPassword, encodedOldPassword)).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.changePassword(requestDto))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(e -> assertThat(((GeneralException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.UNMATCHED_PASSWORD));
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - DB 업데이트 실패")
+    void 비밀번호_변경_실패_DB업데이트실패() {
+        // given
+        String oldPassword = "OldPassword123";
+        String newPassword = "NewPassword123";
+        String encodedOldPassword = "$2a$10$encodedOldPassword";
+        String encodedNewPassword = "$2a$10$encodedNewPassword";
+
+        MemberRequestDto.PasswordDto requestDto = MemberRequestDto.PasswordDto.builder()
+                .oldPassword(oldPassword)
+                .newPassword(newPassword)
+                .build();
+
+        Member testMember = Member.builder()
+                .email("test@example.com")
+                .password(encodedOldPassword)
+                .build();
+
+        given(authenticatedMemberProvider.getMemberByContextHolder()).willReturn(testMember);
+        given(bCryptPasswordEncoder.matches(oldPassword, encodedOldPassword)).willReturn(true);
+        given(bCryptPasswordEncoder.encode(newPassword)).willReturn(encodedNewPassword);
+        given(memberMapper.updatePassword(testMember.getEmail(), encodedNewPassword)).willReturn(0);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.changePassword(requestDto))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(e -> assertThat(((GeneralException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.MEMBER_PASSWORD_FAILED));
+    }
 }

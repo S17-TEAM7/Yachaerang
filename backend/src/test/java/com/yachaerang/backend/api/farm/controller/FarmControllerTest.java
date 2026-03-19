@@ -3,6 +3,8 @@ package com.yachaerang.backend.api.farm.controller;
 import com.yachaerang.backend.api.farm.dto.response.FarmResponseDto;
 import com.yachaerang.backend.api.farm.dto.resquest.FarmRequestDto;
 import com.yachaerang.backend.api.farm.service.FarmService;
+import com.yachaerang.backend.global.exception.GeneralException;
+import com.yachaerang.backend.global.response.ErrorCode;
 import com.yachaerang.backend.global.util.RestDocsSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -229,5 +231,89 @@ class FarmControllerTest extends RestDocsSupport {
                 ));
 
         verify(farmService).updateFarmInfo(any(FarmRequestDto.InfoDto.class));
+    }
+
+    @Test
+    @DisplayName("[POST] /api/v1/farms - GeneralException 시 해당 에러코드로 응답")
+    void saveFarm_GeneralException() throws Exception {
+        // given
+        FarmRequestDto.InfoDto requestDto = createRequestDto();
+        given(farmService.saveFarmInfo(any(FarmRequestDto.InfoDto.class)))
+                .willReturn(CompletableFuture.failedFuture(
+                        new GeneralException(ErrorCode.FARM_ALREADY_EXISTS)));
+
+        // when & then
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/farms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(AUTH_HEADER, TEST_TOKEN)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("[POST] /api/v1/farms - RuntimeException 시 500 응답")
+    void saveFarm_RuntimeException() throws Exception {
+        // given
+        FarmRequestDto.InfoDto requestDto = createRequestDto();
+        given(farmService.saveFarmInfo(any(FarmRequestDto.InfoDto.class)))
+                .willReturn(CompletableFuture.failedFuture(
+                        new RuntimeException("unexpected error")));
+
+        // when & then
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/farms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(AUTH_HEADER, TEST_TOKEN)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("[PATCH] /api/v1/farms - GeneralException 시 해당 에러코드로 응답")
+    void updateFarm_GeneralException() throws Exception {
+        // given
+        FarmRequestDto.InfoDto requestDto = createRequestDto();
+        given(farmService.updateFarmInfo(any(FarmRequestDto.InfoDto.class)))
+                .willReturn(CompletableFuture.failedFuture(
+                        new GeneralException(ErrorCode.FARM_NOT_FOUND)));
+
+        // when & then
+        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/farms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(AUTH_HEADER, TEST_TOKEN)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("[PATCH] /api/v1/farms - RuntimeException 시 500 응답")
+    void updateFarm_RuntimeException() throws Exception {
+        // given
+        FarmRequestDto.InfoDto requestDto = createRequestDto();
+        given(farmService.updateFarmInfo(any(FarmRequestDto.InfoDto.class)))
+                .willReturn(CompletableFuture.failedFuture(
+                        new RuntimeException("unexpected error")));
+
+        // when & then
+        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/farms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(AUTH_HEADER, TEST_TOKEN)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isInternalServerError());
     }
 }
