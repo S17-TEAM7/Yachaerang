@@ -120,7 +120,6 @@ class BatchApiServiceTest {
         verify(batchInternalClient).runWeeklyPriceJob(2025, 11);
     }
 
-    // ── collectWeeklyRange ───────────────────────────────────────────────────
 
     @Test
     @DisplayName("주간 범위 집계 성공")
