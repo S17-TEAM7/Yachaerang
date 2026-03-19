@@ -7,6 +7,7 @@ import com.yachaerang.backend.global.exception.GeneralException;
 import com.yachaerang.backend.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,11 @@ public class WeeklyPriceService {
 
     private final WeeklyPriceMapper weeklyPriceMapper;
 
+    @Cacheable(
+            value = "weekly:price",
+            key = "#productCode + ':' + #startDate + ':' + #endDate",
+            condition = "#endDate.isBefore(T(java.time.LocalDate).now())"
+    )
     public List<WeeklyPriceResponseDto.PriceRecordDto> getPriceDuration(
             String productCode, LocalDate startDate, LocalDate endDate
     ) {

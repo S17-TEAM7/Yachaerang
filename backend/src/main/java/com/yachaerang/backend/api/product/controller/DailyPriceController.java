@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @RequestMapping("/api/v1/daily-prices")
@@ -31,7 +32,8 @@ public class DailyPriceController {
      */
     @GetMapping("/rank/high-prices")
     public List<DailyPriceResponseDto.RankDto> getHighPriceRank() {
-        return dailyPriceService.getHighPriceRank();
+        LocalDate yesterday = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1);
+        return dailyPriceService.getHighPriceRank(yesterday);
     }
 
     /*
@@ -39,7 +41,8 @@ public class DailyPriceController {
      */
     @GetMapping("/rank/low-prices")
     public List<DailyPriceResponseDto.RankDto> getLowPriceRank() {
-        return dailyPriceService.getLowPriceRank();
+        LocalDate yesterday = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1);
+        return dailyPriceService.getLowPriceRank(yesterday);
     }
 
 }
