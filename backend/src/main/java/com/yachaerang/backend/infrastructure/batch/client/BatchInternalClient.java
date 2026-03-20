@@ -1,7 +1,8 @@
 package com.yachaerang.backend.infrastructure.batch.client;
 
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchDailyResponseDto;
-import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobExecutionResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStartResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStatusResponseDto;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchWeeklyRangeResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,14 +20,18 @@ public class BatchInternalClient {
                 b -> b.queryParam("targetDate", targetDate));
     }
 
-    public BatchJobExecutionResponseDto collectDateRange(LocalDate startDate, LocalDate endDate) {
-        return httpTemplate.post("/date-range", BatchJobExecutionResponseDto.class,
+    public BatchJobStartResponseDto collectDateRange(LocalDate startDate, LocalDate endDate) {
+        return httpTemplate.post("/date-range", BatchJobStartResponseDto.class,
                 b -> b.queryParam("startDate", startDate)
                       .queryParam("endDate", endDate));
     }
 
-    public BatchJobExecutionResponseDto runWeeklyPriceJob(Integer year, Integer week) {
-        return httpTemplate.post("/weekly-price", BatchJobExecutionResponseDto.class,
+    public BatchJobStatusResponseDto getJobStatus(Long jobId) {
+        return httpTemplate.get("/job-status/" + jobId, BatchJobStatusResponseDto.class, b -> b);
+    }
+
+    public BatchJobStartResponseDto runWeeklyPriceJob(Integer year, Integer week) {
+        return httpTemplate.post("/weekly-price", BatchJobStartResponseDto.class,
                 b -> b.queryParam("year", year)
                       .queryParam("week", week));
     }
@@ -40,14 +45,14 @@ public class BatchInternalClient {
                       .queryParam("endWeek", endWeek));
     }
 
-    public BatchJobExecutionResponseDto runMonthlyPriceJob(Integer year, Integer month) {
-        return httpTemplate.post("/monthly-price", BatchJobExecutionResponseDto.class,
+    public BatchJobStartResponseDto runMonthlyPriceJob(Integer year, Integer month) {
+        return httpTemplate.post("/monthly-price", BatchJobStartResponseDto.class,
                 b -> b.queryParam("year", year)
                       .queryParam("month", month));
     }
 
-    public BatchJobExecutionResponseDto runYearlyPriceJob(Integer year) {
-        return httpTemplate.post("/yearly-price", BatchJobExecutionResponseDto.class,
+    public BatchJobStartResponseDto runYearlyPriceJob(Integer year) {
+        return httpTemplate.post("/yearly-price", BatchJobStartResponseDto.class,
                 b -> b.queryParam("year", year));
     }
 }
