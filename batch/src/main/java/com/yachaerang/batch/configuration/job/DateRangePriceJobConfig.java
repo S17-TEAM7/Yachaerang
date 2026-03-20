@@ -23,8 +23,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
@@ -48,6 +47,7 @@ public class DateRangePriceJobConfig {
     private final KamisApiService kamisApiService;
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
+    private final ThreadPoolTaskExecutor batchTaskExecutor;
 
     private static final int CHUNK_SIZE = 100;
     private static final List<String> CATEGORY_CODES = List.of("100", "200", "300", "400", "500", "600");
@@ -73,7 +73,7 @@ public class DateRangePriceJobConfig {
         return new StepBuilder("dateRangePartitionStep", jobRepository)
                 .partitioner("dailyStepPartitioner", dateRangePartitioner(null, null))
                 .step(partitionedPriceStep())
-                .taskExecutor(batchTaskExecutor())
+                .taskExecutor(batchTaskExecutor)
                 .gridSize(10)
                 .build();
     }
@@ -162,15 +162,5 @@ public class DateRangePriceJobConfig {
     @Bean
     public DailyPriceWriter partitionedPriceWriter() {
         return new DailyPriceWriter(dailyPriceRepository);
-    }
-
-    /**
-     * 병렬 처리
-     */
-    @Bean
-    public TaskExecutor batchTaskExecutor() {
-        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("batch-");
-        executor.setConcurrencyLimit(5);
-        return executor;
     }
 }
