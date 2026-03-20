@@ -9,45 +9,61 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-/*
-Job에 대한 Listener 구현
- */
 @Slf4j
 @Component
 public class JobCompletionListener implements JobExecutionListener {
 
-    /*
-    시작 이전의 Listener
-     */
     @Override
     public void beforeJob(JobExecution jobExecution) {
         log.info("========================================");
         log.info("Job 시작: {}", jobExecution.getJobInstance().getJobName());
+        log.info("jobExecutionId={}", jobExecution.getId());
         log.info("Job Parameters: {}", jobExecution.getJobParameters());
         log.info("시작 시간: {}", jobExecution.getStartTime());
         log.info("========================================");
     }
 
-    /*
-    종료 이후의 Listener
-     */
     @Override
     public void afterJob(JobExecution jobExecution) {
         LocalDateTime startTime = jobExecution.getStartTime();
         LocalDateTime endTime = jobExecution.getEndTime();
-
         Duration duration = Duration.between(startTime, endTime);
 
         log.info("========================================");
         log.info("Job 완료: {}", jobExecution.getJobInstance().getJobName());
-        log.info("상태: {}", jobExecution.getStatus());
+        log.info("jobExecutionId={}, status={}", jobExecution.getId(), jobExecution.getStatus());
         log.info("종료 시간: {}", endTime);
         log.info("소요 시간: {}초", duration.getSeconds());
 
         if (jobExecution.getStatus() == BatchStatus.FAILED) {
-            log.error("Job 실패 - 예외 정보:");
-            jobExecution.getAllFailureExceptions()
-                    .forEach(e -> log.error("Exception: ", e));
+            log.error("===== JOB FAILED =====");
+            log.error("jobName={}, jobExecutionId={}, status={}",
+                    jobExecution.getJobInstance().getJobName(),
+                    jobExecution.getId(),
+                    jobExecution.getStatus());
+
+            // 모든 failure exception 순회하며 root cause 탐색
+            for (Throwable ex : jobExecution.getAllFailureExceptions()) {
+                log.error("Failure exception: class={}", ex.getClass().getName(), ex);
+
+                Throwable root = ex;
+                while (root.getCause() != null) {
+                    root = root.getCause();
+                }
+                log.error("Root cause: class={}, message={}", root.getClass().getName(), root.getMessage());
+            }
+
+            // 실패한 StepExecution 상세 출력
+            jobExecution.getStepExecutions().stream()
+                    .filter(step -> step.getStatus() == BatchStatus.FAILED)
+                    .forEach(step -> log.error(
+                            "Failed step: name={}, readCount={}, writeCount={}, skipCount={}, exitDescription={}",
+                            step.getStepName(),
+                            step.getReadCount(),
+                            step.getWriteCount(),
+                            step.getSkipCount(),
+                            step.getExitStatus().getExitDescription()
+                    ));
         }
         log.info("========================================");
     }
