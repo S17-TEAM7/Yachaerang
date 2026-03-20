@@ -3,7 +3,8 @@ package com.yachaerang.backend.infrastructure.batch.controller;
 import com.yachaerang.backend.global.response.ResponseWrappingAdvice;
 import com.yachaerang.backend.global.util.RestDocsSupport;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchDailyResponseDto;
-import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobExecutionResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStartResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStatusResponseDto;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchWeeklyRangeResponseDto;
 import com.yachaerang.backend.infrastructure.batch.service.BatchApiService;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.restdocs.payload.FieldDescriptor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.BDDMockito.given;
@@ -22,8 +24,7 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Import(ResponseWrappingAdvice.class)
@@ -82,8 +83,7 @@ class BatchApiControllerTest extends RestDocsSupport {
         LocalDate startDate = LocalDate.of(2025, 3, 1);
         LocalDate endDate = LocalDate.of(2025, 3, 18);
         given(batchApiService.collectDateRange(startDate, endDate))
-                .willReturn(new BatchJobExecutionResponseDto(true, 1L, "COMPLETED",
-                        startDate.toString(), endDate.toString(), null, null, null));
+                .willReturn(new BatchJobStartResponseDto(1L, "STARTING", "Batch job accepted"));
 
         // when & then
         mockMvc.perform(post("/api/batch/date-range")
@@ -98,11 +98,41 @@ class BatchApiControllerTest extends RestDocsSupport {
                                 parameterWithName("endDate").description("종료 날짜 (yyyy-MM-dd)")
                         ),
                         responseFields(ENVELOPE_COMMON).and(
-                                fieldWithPath("data.success").type(BOOLEAN).description("Job 실행 성공 여부"),
-                                fieldWithPath("data.jobId").type(NUMBER).description("Job 실행 ID"),
+                                fieldWithPath("data.jobId").type(NUMBER).description("비동기 Job ID"),
+                                fieldWithPath("data.status").type(STRING).description("Job 접수 상태 (STARTING)"),
+                                fieldWithPath("data.message").type(STRING).description("접수 결과 메시지")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("[GET] /api/batch/job-status/{jobId} - Job 실행 상태 조회")
+    void getJobStatus() throws Exception {
+        // given
+        LocalDateTime startTime = LocalDateTime.of(2025, 3, 18, 10, 0, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 3, 18, 10, 5, 0);
+        given(batchApiService.getJobStatus(1L))
+                .willReturn(new BatchJobStatusResponseDto(
+                        1L, "dateRangePriceJob", "COMPLETED", "COMPLETED",
+                        startTime, endTime, "Job 완료", null));
+
+        // when & then
+        mockMvc.perform(get("/api/batch/job-status/{jobId}", 1L))
+                .andExpect(status().isOk())
+                .andDo(doc(
+                        "batch-job-status",
+                        requestHeaders(),
+                        pathParameters(
+                                parameterWithName("jobId").description("조회할 Job ID")
+                        ),
+                        responseFields(ENVELOPE_COMMON).and(
+                                fieldWithPath("data.jobId").type(NUMBER).description("Job ID"),
+                                fieldWithPath("data.jobName").type(STRING).description("Job 이름"),
                                 fieldWithPath("data.status").type(STRING).description("Job 실행 상태"),
-                                fieldWithPath("data.startDate").type(STRING).description("시작 날짜"),
-                                fieldWithPath("data.endDate").type(STRING).description("종료 날짜")
+                                fieldWithPath("data.exitStatus").type(STRING).description("Job 종료 코드"),
+                                fieldWithPath("data.startTime").type(STRING).description("Job 시작 시간"),
+                                fieldWithPath("data.endTime").type(STRING).description("Job 종료 시간"),
+                                fieldWithPath("data.message").type(STRING).description("상태 메시지")
                         )
                 ));
     }
@@ -112,8 +142,7 @@ class BatchApiControllerTest extends RestDocsSupport {
     void runWeeklyPriceJob() throws Exception {
         // given
         given(batchApiService.runWeeklyPriceJob(2025, 11))
-                .willReturn(new BatchJobExecutionResponseDto(true, 1L, "COMPLETED",
-                        null, null, "2025", "11", null));
+                .willReturn(new BatchJobStartResponseDto(1L, "STARTING", null));
 
         // when & then
         mockMvc.perform(post("/api/batch/weekly-price")
@@ -128,11 +157,8 @@ class BatchApiControllerTest extends RestDocsSupport {
                                 parameterWithName("week").description("주차")
                         ),
                         responseFields(ENVELOPE_COMMON).and(
-                                fieldWithPath("data.success").type(BOOLEAN).description("Job 실행 성공 여부"),
-                                fieldWithPath("data.jobId").type(NUMBER).description("Job 실행 ID"),
-                                fieldWithPath("data.status").type(STRING).description("Job 실행 상태"),
-                                fieldWithPath("data.year").type(STRING).description("년도"),
-                                fieldWithPath("data.week").type(STRING).description("주차")
+                                fieldWithPath("data.jobId").type(NUMBER).description("비동기 Job ID"),
+                                fieldWithPath("data.status").type(STRING).description("Job 접수 상태 (STARTING)")
                         )
                 ));
     }
@@ -143,9 +169,9 @@ class BatchApiControllerTest extends RestDocsSupport {
         // given
         given(batchApiService.collectWeeklyRange(2025, 1, 2025, 11))
                 .willReturn(new BatchWeeklyRangeResponseDto(
-                        true,
+                        null,
                         List.of(1L, 2L),
-                        List.of("COMPLETED", "COMPLETED")));
+                        List.of("STARTING", "STARTING")));
 
         // when & then
         mockMvc.perform(post("/api/batch/weekly-price/range")
@@ -164,9 +190,8 @@ class BatchApiControllerTest extends RestDocsSupport {
                                 parameterWithName("endWeek").description("종료 주차")
                         ),
                         responseFields(ENVELOPE_COMMON).and(
-                                fieldWithPath("data.success").type(BOOLEAN).description("집계 성공 여부"),
                                 fieldWithPath("data.jobIdList").type(ARRAY).description("Job 실행 ID 목록"),
-                                fieldWithPath("data.statusList").type(ARRAY).description("Job 실행 상태 목록")
+                                fieldWithPath("data.statusList").type(ARRAY).description("Job 접수 상태 목록")
                         )
                 ));
     }
@@ -176,8 +201,7 @@ class BatchApiControllerTest extends RestDocsSupport {
     void runMonthlyPriceJob() throws Exception {
         // given
         given(batchApiService.runMonthlyPriceJob(2025, 3))
-                .willReturn(new BatchJobExecutionResponseDto(true, 1L, "COMPLETED",
-                        null, null, "2025", null, "3"));
+                .willReturn(new BatchJobStartResponseDto(1L, "STARTING", null));
 
         // when & then
         mockMvc.perform(post("/api/batch/monthly-price")
@@ -192,11 +216,8 @@ class BatchApiControllerTest extends RestDocsSupport {
                                 parameterWithName("month").description("월")
                         ),
                         responseFields(ENVELOPE_COMMON).and(
-                                fieldWithPath("data.success").type(BOOLEAN).description("Job 실행 성공 여부"),
-                                fieldWithPath("data.jobId").type(NUMBER).description("Job 실행 ID"),
-                                fieldWithPath("data.status").type(STRING).description("Job 실행 상태"),
-                                fieldWithPath("data.year").type(STRING).description("년도"),
-                                fieldWithPath("data.month").type(STRING).description("월")
+                                fieldWithPath("data.jobId").type(NUMBER).description("비동기 Job ID"),
+                                fieldWithPath("data.status").type(STRING).description("Job 접수 상태 (STARTING)")
                         )
                 ));
     }
@@ -206,8 +227,7 @@ class BatchApiControllerTest extends RestDocsSupport {
     void runYearlyPriceJob() throws Exception {
         // given
         given(batchApiService.runYearlyPriceJob(2025))
-                .willReturn(new BatchJobExecutionResponseDto(true, 1L, "COMPLETED",
-                        null, null, "2025", null, null));
+                .willReturn(new BatchJobStartResponseDto(1L, "STARTING", null));
 
         // when & then
         mockMvc.perform(post("/api/batch/yearly-price")
@@ -220,10 +240,8 @@ class BatchApiControllerTest extends RestDocsSupport {
                                 parameterWithName("year").description("년도")
                         ),
                         responseFields(ENVELOPE_COMMON).and(
-                                fieldWithPath("data.success").type(BOOLEAN).description("Job 실행 성공 여부"),
-                                fieldWithPath("data.jobId").type(NUMBER).description("Job 실행 ID"),
-                                fieldWithPath("data.status").type(STRING).description("Job 실행 상태"),
-                                fieldWithPath("data.year").type(STRING).description("년도")
+                                fieldWithPath("data.jobId").type(NUMBER).description("비동기 Job ID"),
+                                fieldWithPath("data.status").type(STRING).description("Job 접수 상태 (STARTING)")
                         )
                 ));
     }
