@@ -1,7 +1,8 @@
 package com.yachaerang.backend.infrastructure.batch.controller;
 
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchDailyResponseDto;
-import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobExecutionResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStartResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStatusResponseDto;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchWeeklyRangeResponseDto;
 import com.yachaerang.backend.infrastructure.batch.service.BatchApiService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class BatchApiController {
      * 기간 범위 일별 데이터 수집
      */
     @PostMapping("/date-range")
-    public BatchJobExecutionResponseDto collectDateRange(
+    public BatchJobStartResponseDto collectDateRange(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
         return batchApiService.collectDateRange(startDate, endDate);
@@ -48,7 +49,7 @@ public class BatchApiController {
      * 특정 년도/주차 주간 집계
      */
     @PostMapping("/weekly-price")
-    public BatchJobExecutionResponseDto runWeeklyPriceJob(
+    public BatchJobStartResponseDto runWeeklyPriceJob(
             @RequestParam Integer year,
             @RequestParam Integer week) {
         return batchApiService.runWeeklyPriceJob(year, week);
@@ -70,7 +71,7 @@ public class BatchApiController {
      * 특정 년도/월 월간 집계
      */
     @PostMapping("/monthly-price")
-    public BatchJobExecutionResponseDto runMonthlyPriceJob(
+    public BatchJobStartResponseDto runMonthlyPriceJob(
             @RequestParam Integer year,
             @RequestParam Integer month) {
         return batchApiService.runMonthlyPriceJob(year, month);
@@ -80,7 +81,7 @@ public class BatchApiController {
      * 특정 년도 연간 집계
      */
     @PostMapping("/yearly-price")
-    public BatchJobExecutionResponseDto runYearlyPriceJob(
+    public BatchJobStartResponseDto runYearlyPriceJob(
             @RequestParam Integer year) {
         return batchApiService.runYearlyPriceJob(year);
     }
