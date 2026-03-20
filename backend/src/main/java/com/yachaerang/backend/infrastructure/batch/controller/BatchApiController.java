@@ -37,6 +37,14 @@ public class BatchApiController {
     }
 
     /**
+     * Job 실행 상태 조회
+     */
+    @GetMapping("/job-status/{jobId}")
+    public BatchJobStatusResponseDto getJobStatus(@PathVariable Long jobId) {
+        return batchApiService.getJobStatus(jobId);
+    }
+
+    /**
      * 특정 년도/주차 주간 집계
      */
     @PostMapping("/weekly-price")
