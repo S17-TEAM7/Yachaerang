@@ -20,7 +20,7 @@ public class WebClientBatchHttpTemplate implements BatchHttpTemplate {
 
     private final WebClient batchWebClient;
 
-    private static final Duration TIMEOUT = Duration.ofMillis(60000);
+    private static final Duration TIMEOUT = Duration.ofMillis(10000);
 
     @Override
     public <T> T get(String path, Class<T> type, UnaryOperator<UriBuilder> params) {
@@ -44,6 +44,9 @@ public class WebClientBatchHttpTemplate implements BatchHttpTemplate {
 
     private <T> T execute(WebClient.ResponseSpec spec, String uri, Class<T> type) {
         return spec
+                .onStatus(status -> status.value() == 404, r -> r.bodyToMono(String.class)
+                        .defaultIfEmpty("No Exception Body")
+                        .map(body -> BatchException.of(ErrorCode.BATCH_JOB_NOT_FOUND)))
                 .onStatus(HttpStatusCode::is4xxClientError, r -> r.bodyToMono(String.class)
                         .defaultIfEmpty("No Exception Body")
                         .map(body -> BatchException.of(ErrorCode.BATCH_BAD_REQUEST)))
