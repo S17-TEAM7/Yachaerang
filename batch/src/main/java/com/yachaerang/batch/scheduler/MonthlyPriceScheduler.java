@@ -1,9 +1,9 @@
 package com.yachaerang.batch.scheduler;
 
+import com.yachaerang.batch.domain.dto.JobStartResponseDto;
 import com.yachaerang.batch.service.BatchJobService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,7 +14,7 @@ import java.time.YearMonth;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MonthlyPriceScheduler {
+public class   MonthlyPriceScheduler {
 
     private final BatchJobService batchJobService;
 
@@ -31,8 +31,8 @@ public class MonthlyPriceScheduler {
             String[] categories = {"100", "200", "300", "400", "500", "600"};
             for (String category : categories) {
                 try {
-                    JobExecution execution = batchJobService.collectPreviousMonth();
-                    log.info("카테고리 {} 수집 완료: {}", category, execution.getStatus());
+                    JobStartResponseDto response = batchJobService.collectPreviousMonth();
+                    log.info("카테고리 {} 배치 접수 완료: jobId={}, status={}", category, response.getJobId(), response.getStatus());
                 } catch (JobExecutionException e) {
                     log.error("카테고리 {} 수집 실패: {}", category, e.getMessage());
                 }

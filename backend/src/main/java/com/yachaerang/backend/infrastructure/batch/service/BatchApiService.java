@@ -2,7 +2,8 @@ package com.yachaerang.backend.infrastructure.batch.service;
 
 import com.yachaerang.backend.infrastructure.batch.client.BatchInternalClient;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchDailyResponseDto;
-import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobExecutionResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStartResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStatusResponseDto;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchWeeklyRangeResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,12 +23,19 @@ public class BatchApiService {
         return batchInternalClient.runDailyJob(targetDate);
     }
 
-    public BatchJobExecutionResponseDto collectDateRange(LocalDate startDate, LocalDate endDate) {
+    public BatchJobStartResponseDto collectDateRange(LocalDate startDate, LocalDate endDate) {
         log.info("[BatchApi] collectDateRange startDate={} endDate={}", startDate, endDate);
-        return batchInternalClient.collectDateRange(startDate, endDate);
+        BatchJobStartResponseDto response = batchInternalClient.collectDateRange(startDate, endDate);
+        log.info("[BatchApi] collectDateRange accepted: jobId={}", response.getJobId());
+        return response;
     }
 
-    public BatchJobExecutionResponseDto runWeeklyPriceJob(Integer year, Integer week) {
+    public BatchJobStatusResponseDto getJobStatus(Long jobId) {
+        log.info("[BatchApi] getJobStatus jobId={}", jobId);
+        return batchInternalClient.getJobStatus(jobId);
+    }
+
+    public BatchJobStartResponseDto runWeeklyPriceJob(Integer year, Integer week) {
         log.info("[BatchApi] runWeeklyPriceJob year={} week={}", year, week);
         return batchInternalClient.runWeeklyPriceJob(year, week);
     }
@@ -39,12 +47,12 @@ public class BatchApiService {
         return batchInternalClient.collectWeeklyRange(startYear, startWeek, endYear, endWeek);
     }
 
-    public BatchJobExecutionResponseDto runMonthlyPriceJob(Integer year, Integer month) {
+    public BatchJobStartResponseDto runMonthlyPriceJob(Integer year, Integer month) {
         log.info("[BatchApi] runMonthlyPriceJob year={} month={}", year, month);
         return batchInternalClient.runMonthlyPriceJob(year, month);
     }
 
-    public BatchJobExecutionResponseDto runYearlyPriceJob(Integer year) {
+    public BatchJobStartResponseDto runYearlyPriceJob(Integer year) {
         log.info("[BatchApi] runYearlyPriceJob year={}", year);
         return batchInternalClient.runYearlyPriceJob(year);
     }
