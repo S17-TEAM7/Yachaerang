@@ -5,7 +5,10 @@ import com.yachaerang.batch.domain.dailyPrice.reader.DailyPriceReader;
 import com.yachaerang.batch.domain.dailyPrice.writer.DailyPriceWriter;
 import com.yachaerang.batch.domain.dto.KamisPriceItem;
 import com.yachaerang.batch.domain.entity.DailyPrice;
+import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
+import com.yachaerang.batch.listener.MdcStepListener;
+import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.repository.ProductRepository;
 import com.yachaerang.batch.service.KamisApiService;
@@ -43,6 +46,9 @@ public class DateRangePriceJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager platformTransactionManager;
     private final JobCompletionListener jobCompletionListener;
+    private final StepExecutionListener stepExecutionListener;
+    private final MdcStepListener mdcStepListener;
+    private final ItemSkipListener itemSkipListener;
 
     private final KamisApiService kamisApiService;
     private final ProductRepository productRepository;
@@ -74,12 +80,12 @@ public class DateRangePriceJobConfig {
                 .partitioner("dailyStepPartitioner", dateRangePartitioner(null, null))
                 .step(partitionedPriceStep())
                 .taskExecutor(batchTaskExecutor)
-                .gridSize(10)
+                .gridSize(CATEGORY_CODES.size())
                 .build();
     }
 
     /*
-    날짜 범위 기반의 Partitioner - 시작일 ~ 종료일 범위
+    날짜 범위 기반의 Partitioner
      */
     @Bean
     @StepScope
@@ -91,22 +97,24 @@ public class DateRangePriceJobConfig {
             Map<String, ExecutionContext> partitions = new HashMap<>();
             LocalDate startDate = LocalDate.parse(startDateStr, FORMATTER);
             LocalDate endDate = LocalDate.parse(endDateStr, FORMATTER);
-            log.info("Start Partitioning: {} ~ {}", startDate, endDate);
+            log.info("Start Partitioning: {} ~ {}, categories={}", startDate, endDate, CATEGORY_CODES);
 
             LocalDate currentDate = startDate;
             int partitionNumber = 0;
 
-            // endDate까지 반복
+            // endDate까지 날짜 × 카테고리 파티션 생성
             while (!currentDate.isAfter(endDate)) {
-                ExecutionContext context = new ExecutionContext();
-                context.putString("targetDate", currentDate.format(FORMATTER));
-                context.putInt("partitionNumber", partitionNumber);
-                partitions.put("partition" + partitionNumber, context);
-
+                for (String categoryCode : CATEGORY_CODES) {
+                    ExecutionContext context = new ExecutionContext();
+                    context.putString("targetDate", currentDate.format(FORMATTER));
+                    context.putString("categoryCode", categoryCode);
+                    context.putInt("partitionNumber", partitionNumber);
+                    partitions.put("partition" + partitionNumber, context);
+                    partitionNumber++;
+                }
                 currentDate = currentDate.plusDays(1);
-                partitionNumber++;
             }
-            log.info("Total {} 개의 Partitions 생성", partitions.size());
+            log.info("Total {} 개의 Partitions 생성 (날짜 × 카테고리)", partitions.size());
             return partitions;
         };
     }
@@ -118,12 +126,15 @@ public class DateRangePriceJobConfig {
     public Step partitionedPriceStep() {
         return new StepBuilder("partitionedPriceStep", jobRepository)
                 .<KamisPriceItem, DailyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
-                .reader(partitionedPriceReader(null))
+                .listener(stepExecutionListener)
+                .listener(mdcStepListener)
+                .reader(partitionedPriceReader(null, null))
                 .processor(partitionedPriceProcessor(null))
                 .writer(partitionedPriceWriter())
                 .faultTolerant()
                 .skipLimit(10)
                 .skip(Exception.class)
+                .listener(itemSkipListener)
                 .retryLimit(3)
                 .retry(Exception.class)
                 .build();
@@ -135,13 +146,14 @@ public class DateRangePriceJobConfig {
     @Bean
     @StepScope
     public DailyPriceReader partitionedPriceReader(
-            @Value("#{stepExecutionContext['targetDate']}") String targetDateStr) {
+            @Value("#{stepExecutionContext['targetDate']}") String targetDateStr,
+            @Value("#{stepExecutionContext['categoryCode']}") String categoryCode) {
 
         LocalDate targetDate = LocalDate.parse(targetDateStr);
 
-        log.info("PartitionedReader 생성: targetDate={}, categories={}", targetDate, CATEGORY_CODES);
+        log.info("PartitionedReader 생성: targetDate={}, categoryCode={}", targetDate, categoryCode);
 
-        return new DailyPriceReader(kamisApiService, targetDate, CATEGORY_CODES);
+        return new DailyPriceReader(kamisApiService, targetDate, categoryCode);
     }
 
     /*
