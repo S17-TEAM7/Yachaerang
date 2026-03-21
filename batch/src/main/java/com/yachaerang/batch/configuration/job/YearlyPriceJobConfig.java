@@ -2,7 +2,9 @@ package com.yachaerang.batch.configuration.job;
 
 import com.yachaerang.batch.configuration.parameter.JobPeriodParameter;
 import com.yachaerang.batch.domain.entity.YearlyPrice;
+import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
+import com.yachaerang.batch.listener.MdcStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.service.YearlyPriceAggregationService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,8 @@ public class YearlyPriceJobConfig {
     private final PlatformTransactionManager platformTransactionManager;
     private final JobCompletionListener jobCompletionListener;
     private final StepExecutionListener stepExecutionListener;
+    private final MdcStepListener mdcStepListener;
+    private final ItemSkipListener itemSkipListener;
 
     private final YearlyPriceAggregationService yearlyPriceAggregationService;
 
@@ -61,10 +65,14 @@ public class YearlyPriceJobConfig {
         return new StepBuilder("yearlyPriceStep", jobRepository)
                 .<YearlyPrice, YearlyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
                 .listener(stepExecutionListener)
+                .listener(mdcStepListener)
                 .reader(yearlyPriceReader)
                 .processor(yearlyPriceProcessor)
                 .writer(yearlyPriceWriter)
                 .faultTolerant()
+                .skipLimit(10)
+                .skip(Exception.class)
+                .listener(itemSkipListener)
                 .retryLimit(3)
                 .retry(Exception.class)
                 .build();

@@ -3,7 +3,9 @@ package com.yachaerang.batch.configuration.job;
 import com.yachaerang.batch.configuration.parameter.JobPeriodParameter;
 import com.yachaerang.batch.domain.entity.MonthlyPrice;
 import com.yachaerang.batch.domain.processor.MonthlyPriceProcessor;
+import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
+import com.yachaerang.batch.listener.MdcStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.service.MonthlyPriceAggregationService;
@@ -35,6 +37,8 @@ public class MonthlyPriceJobConfig {
     private final PlatformTransactionManager platformTransactionManager;
     private final JobCompletionListener jobCompletionListener;
     private final StepExecutionListener stepExecutionListener;
+    private final MdcStepListener mdcStepListener;
+    private final ItemSkipListener itemSkipListener;
 
     private final MonthlyPriceAggregationService monthlyPriceAggregationService;
     private final DailyPriceRepository dailyPriceRepository;
@@ -63,10 +67,14 @@ public class MonthlyPriceJobConfig {
         return new StepBuilder("monthlyPriceStep", jobRepository)
                 .<MonthlyPrice, MonthlyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
                 .listener(stepExecutionListener)
+                .listener(mdcStepListener)
                 .reader(monthlyPriceReader)
                 .processor(monthlyPriceProcessor())
                 .writer(monthlyPriceWriter)
                 .faultTolerant()
+                .skipLimit(10)
+                .skip(Exception.class)
+                .listener(itemSkipListener)
                 .retryLimit(3)
                 .retry(Exception.class)
                 .build();
