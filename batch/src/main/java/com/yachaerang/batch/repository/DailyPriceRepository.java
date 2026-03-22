@@ -80,4 +80,9 @@ public interface DailyPriceRepository {
     Long findLatestPriceInMonth(@Param("productCode") String productCode,
                                    @Param("monthStartDate") LocalDate monthStartDate,
                                    @Param("monthEndDate") LocalDate monthEndDate);
+
+    /*
+    Redis 초기화용 전체 조회 (페이징)
+     */
+    List<DailyPrice> findAllPaged(@Param("offset") int offset, @Param("limit") int limit);
 }

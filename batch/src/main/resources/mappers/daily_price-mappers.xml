@@ -92,4 +92,12 @@
         ORDER BY price_date DESC
             LIMIT 1
     </select>
+
+    <!-- Redis 초기화용 전체 조회 (페이징) -->
+    <select id="findAllPaged" resultMap="dailyPriceResultMap">
+        SELECT daily_price_id, product_code, price_date, price, price_change, price_change_rate
+        FROM daily_price
+        ORDER BY daily_price_id ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
 </mapper>
