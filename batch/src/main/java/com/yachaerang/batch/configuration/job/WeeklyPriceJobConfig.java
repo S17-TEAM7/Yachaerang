@@ -7,7 +7,7 @@ import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.listener.MdcStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
-import com.yachaerang.batch.repository.DailyPriceRepository;
+import com.yachaerang.batch.service.RedisAggregationService;
 import com.yachaerang.batch.service.WeeklyPriceAggregationService;
 import com.yachaerang.batch.util.WeekUtils;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class WeeklyPriceJobConfig {
     private final ItemSkipListener itemSkipListener;
 
     private final WeeklyPriceAggregationService weeklyPriceAggregationService;
-    private final DailyPriceRepository dailyPriceRepository;
+    private final RedisAggregationService redisAggregationService;
 
     private static final int CHUNK_SIZE= 100;
 
@@ -107,7 +107,7 @@ public class WeeklyPriceJobConfig {
     @StepScope
     public WeeklyPriceProcessor weeklyPriceProcessor() {
 
-        return new WeeklyPriceProcessor(dailyPriceRepository);
+        return new WeeklyPriceProcessor(redisAggregationService);
     }
 
     /**

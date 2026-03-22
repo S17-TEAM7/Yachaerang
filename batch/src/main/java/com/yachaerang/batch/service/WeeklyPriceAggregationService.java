@@ -20,15 +20,14 @@ import java.util.List;
 public class WeeklyPriceAggregationService {
 
     private final WeeklyPriceRepository weeklyPriceRepository;
+    private final RedisAggregationService redisAggregationService;
 
     /**
      * 주간 집계 데이터 조회
      */
     public List<WeeklyPrice> getWeeklyAggregatedPrices(LocalDate startDate, LocalDate endDate) {
         log.info("주간 집계 데이터 조회 - 기간: {} ~ {}", startDate, endDate);
-
-        List<WeeklyPrice> results = weeklyPriceRepository.selectWeeklyAggregatedPrices(startDate, endDate);
-
+        List<WeeklyPrice> results = redisAggregationService.getWeeklyAggregatedPrices(startDate, endDate);
         log.info("조회된 집계 데이터: {} 건", results.size());
         return results;
     }
