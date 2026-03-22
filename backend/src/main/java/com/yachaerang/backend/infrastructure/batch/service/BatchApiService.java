@@ -56,4 +56,9 @@ public class BatchApiService {
         log.info("[BatchApi] runYearlyPriceJob year={}", year);
         return batchInternalClient.runYearlyPriceJob(year);
     }
+
+    public BatchJobStartResponseDto runRedisInit() {
+        log.info("[BatchApi] runRedisInit");
+        return batchInternalClient.runRedisInit();
+    }
 }
