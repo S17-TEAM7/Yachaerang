@@ -111,6 +111,7 @@ public enum ErrorCode implements BaseCode{
     BATCH_CONNECTION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "BATCH_003", "배치 서버에 연결할 수 없습니다."),
     BATCH_BAD_REQUEST(HttpStatus.BAD_REQUEST, "BATCH_004", "배치 서버 요청이 잘못되었습니다."),
     BATCH_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "BATCH_005", "배치 서버 내부 오류가 발생했습니다."),
+    BATCH_JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "BATCH_006", "존재하지 않는 Job입니다."),
 
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500ERROR", "서버에서 장애가 일어났습니다."),

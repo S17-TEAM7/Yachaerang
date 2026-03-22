@@ -1,5 +1,6 @@
 package com.yachaerang.batch.service;
 
+import com.yachaerang.batch.domain.dto.JobStartResponseDto;
 import com.yachaerang.batch.exception.GeneralException;
 import com.yachaerang.batch.util.WeekUtils;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +15,14 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class BatchJobService {
 
-    private final JobLauncher jobLauncher;
+    private final JobLauncher asyncJobLauncher;
     private final Job dateRangePriceJob;
     private final Job dailyPriceJob;
     private final Job weeklyPriceJob;
@@ -39,35 +41,43 @@ public class BatchJobService {
                     .addString("targetDate", targetDate.format(FORMATTER))
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
-            return jobLauncher.run(dailyPriceJob, jobParameters);
+            return asyncJobLauncher.run(dailyPriceJob, jobParameters);
         } catch (Exception e) {
             log.error("수동 실행 실패", e);
-            throw new RuntimeException("Job 실행 실패", e);
+            throw new GeneralException("Job 실행 실패", e);
         }
     }
 
     /**
-     * 특정 기간의 데이터 수집
+     * 특정 기간의 데이터 수집 (비동기 실행)
+     * 중복 실행 정책: requestId(UUID)를 JobParameter에 포함하여 동일 날짜 범위도 독립 Job으로 처리 (중복 허용)
      */
-    public JobExecution collectDateRange(LocalDate startDate, LocalDate endDate)
+    public JobStartResponseDto collectDateRange(LocalDate startDate, LocalDate endDate)
             throws JobExecutionException {
 
-        log.info("기간 범위 배치 실행: {} ~ {}", startDate, endDate);
+        String requestId = UUID.randomUUID().toString();
+        log.info("기간 범위 배치 접수: {} ~ {}, requestId={}", startDate, endDate, requestId);
 
         JobParameters params = new JobParametersBuilder()
                 .addString("startDate", startDate.format(FORMATTER))
                 .addString("endDate", endDate.format(FORMATTER))
-                .addLong("timestamp", System.currentTimeMillis())
+                .addString("requestId", requestId)
                 .toJobParameters();
 
-        return jobLauncher.run(dateRangePriceJob, params);
+        JobExecution execution = asyncJobLauncher.run(dateRangePriceJob, params);
+        log.info("기간 범위 배치 접수 완료: jobId={}, status={}", execution.getJobId(), execution.getStatus());
+        return JobStartResponseDto.builder()
+                .jobId(execution.getJobId())
+                .status(execution.getStatus().toString())
+                .message("Batch job accepted")
+                .build();
     }
 
     /**
-     * 이전 월의 일자별 데이터 전체 수집
+     * 이전 월의 일자별 데이터 전체 수집 (비동기 실행)
      * 스케줄러로 사용할 로직
      */
-    public JobExecution collectPreviousMonth() throws JobExecutionException {
+    public JobStartResponseDto collectPreviousMonth() throws JobExecutionException {
 
         YearMonth previousMonth = YearMonth.now().minusMonths(1);
         LocalDate startDate = previousMonth.atDay(1);
@@ -79,26 +89,22 @@ public class BatchJobService {
     }
 
     /**
-     * 특정 주간 가격 집계 실행
+     * 특정 주간 가격 집계 실행 (비동기)
      */
-    public JobExecution runWeeklyAggregation(Integer year, Integer week) {
+    public JobStartResponseDto runWeeklyAggregation(Integer year, Integer week) {
 
-        // 만약 year와 week가 안맞으면 예외
         if (week > WeekUtils.getLastIsoWeekOfYear(year)) {
             throw new IllegalArgumentException("week가 해당 년도의 주차에 존재하지 않는 주차입니다.");
         }
 
         LocalDate startDate = WeekUtils.getWeekStartDate(year, week);
         LocalDate endDate = WeekUtils.getWeekEndDate(year, week);
-        // 날짜 검증
         LocalDate yesterday = LocalDate.now().minusDays(1);
         if (!endDate.isBefore(yesterday)) {
-            throw new IllegalArgumentException(
-                    String.format("아직 완료되지 않은 주입니다.")
-            );
+            throw new IllegalArgumentException("아직 완료되지 않은 주입니다.");
         }
 
-        log.info("주간 집계 실행 - 입력: {}년 {}주차, 기간: {} ~ {}", year, week, startDate, endDate);
+        log.info("주간 집계 접수 - 입력: {}년 {}주차, 기간: {} ~ {}", year, week, startDate, endDate);
         try {
             JobParameters params = new JobParametersBuilder()
                     .addString("year", year.toString())
@@ -106,7 +112,12 @@ public class BatchJobService {
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            return jobLauncher.run(weeklyPriceJob, params);
+            JobExecution execution = asyncJobLauncher.run(weeklyPriceJob, params);
+            log.info("주간 집계 접수 완료: jobId={}, status={}", execution.getJobId(), execution.getStatus());
+            return JobStartResponseDto.builder()
+                    .jobId(execution.getJobId())
+                    .status(execution.getStatus().toString())
+                    .build();
         } catch (Exception e) {
             log.error("주간 가격 집계 Job 실행 실패", e);
             throw new RuntimeException("Job 실행 실패", e);
@@ -123,7 +134,7 @@ public class BatchJobService {
      * @param endWeek
      * @return
      */
-    public List<JobExecution> collectWeekly(
+    public List<JobStartResponseDto> collectWeekly(
             Integer startYear, Integer startWeek, Integer endYear, Integer endWeek
     ) {
         if (startYear > endYear) {
@@ -133,17 +144,16 @@ public class BatchJobService {
             throw new IllegalArgumentException("주차는 1~52 또는 53만 허용합니다.");
         }
 
-        log.info("주간 집계 범위 실행 시작 - {}년 {}주 ~ {}년 {}주",
+        log.info("주간 집계 범위 접수 시작 - {}년 {}주 ~ {}년 {}주",
                 startYear, startWeek, endYear, endWeek);
 
-        List<JobExecution> resultList = new ArrayList<>();
+        List<JobStartResponseDto> resultList = new ArrayList<>();
 
         try {
             // 같은 연도일 때
             if (startYear.intValue() == endYear.intValue()) {
                 for (int week = startWeek; week <= endWeek; week++) {
-                    JobExecution result = runWeeklyAggregation(startYear, week);
-                    resultList.add(result);
+                    resultList.add(runWeeklyAggregation(startYear, week));
                 }
             }
             // 연도가 다를 때
@@ -151,27 +161,24 @@ public class BatchJobService {
                 // 시작년도의 startWeek ~ 마지막 주까지
                 int lastWeekOfStartYear = WeekUtils.getLastIsoWeekOfYear(startYear);
                 for (int week = startWeek; week <= lastWeekOfStartYear; week++) {
-                    JobExecution result = runWeeklyAggregation(startYear, week);
-                    resultList.add(result);
+                    resultList.add(runWeeklyAggregation(startYear, week));
                 }
 
                 // 중간년도(1년 넘게 차이난다면)
                 for (int year = startYear + 1; year < endYear; year++) {
                     int lastWeekOfYear = WeekUtils.getLastIsoWeekOfYear(year);
                     for (int week = 1; week <= lastWeekOfYear; week++) {
-                        JobExecution result = runWeeklyAggregation(year, week);
-                        resultList.add(result);
+                        resultList.add(runWeeklyAggregation(year, week));
                     }
                 }
 
                 // 종료년도의 1주차부터 endWeek까지
                 for (int week = 1; week <= endWeek; week++) {
-                    JobExecution result = runWeeklyAggregation(endYear, week);
-                    resultList.add(result);
+                    resultList.add(runWeeklyAggregation(endYear, week));
                 }
             }
 
-            log.info("주간 집계 범위 실행 완료 - 총 {}개 Job 실행", resultList.size());
+            log.info("주간 집계 범위 접수 완료 - 총 {}개 Job 접수", resultList.size());
             return resultList;
 
         } catch (Exception e) {
@@ -182,14 +189,13 @@ public class BatchJobService {
 
 
     /**
-     * 특정 기간의 월간 가격 집계 실행
+     * 특정 기간의 월간 가격 집계 실행 (비동기)
      */
-    public JobExecution runMonthlyAggregation(Integer year, Integer month) throws JobExecutionException {
-        // 날짜 검증
+    public JobStartResponseDto runMonthlyAggregation(Integer year, Integer month) throws JobExecutionException {
         if (year == null || month == null) {
             throw new GeneralException("year와 month는 필수입니다.");
         }
-        if (month < 1 || month >12) {
+        if (month < 1 || month > 12) {
             throw new GeneralException("month는 1~12 사이여야합니다.");
         }
         YearMonth targetMonth = YearMonth.of(year, month);
@@ -200,7 +206,7 @@ public class BatchJobService {
             );
         }
 
-        log.info("월간 집계 실행 - 대상: {}년 {}월", year, month);
+        log.info("월간 집계 접수 - 대상: {}년 {}월", year, month);
 
         try {
             JobParameters params = new JobParametersBuilder()
@@ -209,7 +215,12 @@ public class BatchJobService {
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            return jobLauncher.run(monthlyPriceJob, params);
+            JobExecution execution = asyncJobLauncher.run(monthlyPriceJob, params);
+            log.info("월간 집계 접수 완료: jobId={}, status={}", execution.getJobId(), execution.getStatus());
+            return JobStartResponseDto.builder()
+                    .jobId(execution.getJobId())
+                    .status(execution.getStatus().toString())
+                    .build();
         } catch (JobExecutionAlreadyRunningException e) {
             log.warn("이미 실행 중인 Job입니다.");
             throw new GeneralException("이미 실행 중인 Job입니다.", e);
@@ -220,15 +231,13 @@ public class BatchJobService {
     }
 
     /**
-     * 특정 연도의 연간 가격 집계 실행
+     * 특정 연도의 연간 가격 집계 실행 (비동기)
      */
-    public JobExecution runYearlyAggregation(Integer year) {
-        // 기본 유효성 검증
+    public JobStartResponseDto runYearlyAggregation(Integer year) {
         if (year == null) {
             throw new IllegalArgumentException("year는 필수입니다.");
         }
 
-        // 미완료 연도 검증
         int currentYear = LocalDate.now().getYear();
         if (year >= currentYear) {
             throw new IllegalArgumentException(
@@ -236,7 +245,7 @@ public class BatchJobService {
             );
         }
 
-        log.info("연간 집계 실행 - 대상: {}년", year);
+        log.info("연간 집계 접수 - 대상: {}년", year);
 
         try {
             JobParameters params = new JobParametersBuilder()
@@ -244,7 +253,12 @@ public class BatchJobService {
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            return jobLauncher.run(yearlyPriceJob, params);
+            JobExecution execution = asyncJobLauncher.run(yearlyPriceJob, params);
+            log.info("연간 집계 접수 완료: jobId={}, status={}", execution.getJobId(), execution.getStatus());
+            return JobStartResponseDto.builder()
+                    .jobId(execution.getJobId())
+                    .status(execution.getStatus().toString())
+                    .build();
         } catch (JobExecutionAlreadyRunningException e) {
             log.warn("이미 실행 중인 Job입니다.");
             throw new RuntimeException("이미 실행 중인 Job입니다.", e);

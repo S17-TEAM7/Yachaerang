@@ -183,10 +183,11 @@ frontend/src
 | **Frontend** | Vue 3, JavaScript, Tailwind CSS, Axios                      |
 | **Backend**  | Spring Boot 3.5.7, Spring AI, Spring Batch, MyBatis, Gradle |
 | **Database** | MySQL 8.0.33, Redis                                         |
+| **Monitoring** | Prometheus, Grafana                                       |
+| **Testing** | k6                                                           |
 | **CI/CD**    | Github Actions                                              |
 | **API Docs** | Notion, REST Docs                                           |
 | **Infra**    | AWS EC2, AWS RDS, AWS S3, Docker, Nginx                     |
-
 <br>
 
 ---

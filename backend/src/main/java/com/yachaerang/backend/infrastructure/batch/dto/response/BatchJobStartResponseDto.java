@@ -5,14 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class BatchWeeklyRangeResponseDto {
-    private Boolean success;
-    private List<Long> jobIdList;
-    private List<String> statusList;
+public class BatchJobStartResponseDto {
+    private Long jobId;
+    private String status;
+    private String message;
 }

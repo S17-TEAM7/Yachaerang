@@ -1,7 +1,8 @@
 package com.yachaerang.backend.infrastructure.batch.client;
 
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchDailyResponseDto;
-import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobExecutionResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStartResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStatusResponseDto;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchWeeklyRangeResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,10 +15,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.util.UriBuilder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -60,14 +63,13 @@ class BatchInternalClientTest {
         // given
         LocalDate startDate = LocalDate.of(2025, 1, 1);
         LocalDate endDate = LocalDate.of(2025, 1, 31);
-        BatchJobExecutionResponseDto expected = new BatchJobExecutionResponseDto(
-                true, 1L, "COMPLETED", "2025-01-01", "2025-01-31", null, null, null);
+        BatchJobStartResponseDto expected = new BatchJobStartResponseDto(1L, "STARTING", "Batch job accepted");
         ArgumentCaptor<UnaryOperator<UriBuilder>> uriCaptor = ArgumentCaptor.forClass(UnaryOperator.class);
-        given(httpTemplate.post(eq("/date-range"), eq(BatchJobExecutionResponseDto.class), uriCaptor.capture()))
+        given(httpTemplate.post(eq("/date-range"), eq(BatchJobStartResponseDto.class), uriCaptor.capture()))
                 .willReturn(expected);
 
         // when
-        BatchJobExecutionResponseDto result = batchInternalClient.collectDateRange(startDate, endDate);
+        BatchJobStartResponseDto result = batchInternalClient.collectDateRange(startDate, endDate);
 
         // then
         assertThat(result).isSameAs(expected);
@@ -78,20 +80,39 @@ class BatchInternalClientTest {
     }
 
     @Test
+    @DisplayName("Job 상태 조회 시 GET /job-status/{jobId} 요청을 전달한다")
+    @SuppressWarnings("unchecked")
+    void getJobStatus() {
+        // given
+        Long jobId = 1L;
+        BatchJobStatusResponseDto expected = new BatchJobStatusResponseDto(
+                jobId, "dateRangePriceJob", "COMPLETED", "COMPLETED",
+                LocalDateTime.of(2025, 3, 19, 10, 0), LocalDateTime.of(2025, 3, 19, 10, 5),
+                "Job 완료", null);
+        given(httpTemplate.get(eq("/job-status/1"), eq(BatchJobStatusResponseDto.class), any()))
+                .willReturn(expected);
+
+        // when
+        BatchJobStatusResponseDto result = batchInternalClient.getJobStatus(jobId);
+
+        // then
+        assertThat(result).isSameAs(expected);
+    }
+
+    @Test
     @DisplayName("주별 가격 Job 실행 시 POST /weekly-price 요청을 전달하고 year, week 쿼리 파라미터를 설정한다")
     @SuppressWarnings("unchecked")
     void runWeeklyPriceJob() {
         // given
         Integer year = 2025;
         Integer week = 10;
-        BatchJobExecutionResponseDto expected = new BatchJobExecutionResponseDto(
-                true, 2L, "COMPLETED", null, null, "2025", "10", null);
+        BatchJobStartResponseDto expected = new BatchJobStartResponseDto(2L, "STARTING", null);
         ArgumentCaptor<UnaryOperator<UriBuilder>> uriCaptor = ArgumentCaptor.forClass(UnaryOperator.class);
-        given(httpTemplate.post(eq("/weekly-price"), eq(BatchJobExecutionResponseDto.class), uriCaptor.capture()))
+        given(httpTemplate.post(eq("/weekly-price"), eq(BatchJobStartResponseDto.class), uriCaptor.capture()))
                 .willReturn(expected);
 
         // when
-        BatchJobExecutionResponseDto result = batchInternalClient.runWeeklyPriceJob(year, week);
+        BatchJobStartResponseDto result = batchInternalClient.runWeeklyPriceJob(year, week);
 
         // then
         assertThat(result).isSameAs(expected);
@@ -111,7 +132,7 @@ class BatchInternalClientTest {
         Integer endYear = 2025;
         Integer endWeek = 10;
         BatchWeeklyRangeResponseDto expected = new BatchWeeklyRangeResponseDto(
-                true, List.of(1L, 2L, 3L), List.of("COMPLETED", "COMPLETED", "COMPLETED"));
+                null, List.of(1L, 2L, 3L), List.of("STARTING", "STARTING", "STARTING"));
         ArgumentCaptor<UnaryOperator<UriBuilder>> uriCaptor = ArgumentCaptor.forClass(UnaryOperator.class);
         given(httpTemplate.post(eq("/weekly-price/range"), eq(BatchWeeklyRangeResponseDto.class), uriCaptor.capture()))
                 .willReturn(expected);
@@ -136,14 +157,13 @@ class BatchInternalClientTest {
         // given
         Integer year = 2025;
         Integer month = 3;
-        BatchJobExecutionResponseDto expected = new BatchJobExecutionResponseDto(
-                true, 3L, "COMPLETED", null, null, "2025", null, "3");
+        BatchJobStartResponseDto expected = new BatchJobStartResponseDto(3L, "STARTING", null);
         ArgumentCaptor<UnaryOperator<UriBuilder>> uriCaptor = ArgumentCaptor.forClass(UnaryOperator.class);
-        given(httpTemplate.post(eq("/monthly-price"), eq(BatchJobExecutionResponseDto.class), uriCaptor.capture()))
+        given(httpTemplate.post(eq("/monthly-price"), eq(BatchJobStartResponseDto.class), uriCaptor.capture()))
                 .willReturn(expected);
 
         // when
-        BatchJobExecutionResponseDto result = batchInternalClient.runMonthlyPriceJob(year, month);
+        BatchJobStartResponseDto result = batchInternalClient.runMonthlyPriceJob(year, month);
 
         // then
         assertThat(result).isSameAs(expected);
@@ -159,14 +179,13 @@ class BatchInternalClientTest {
     void runYearlyPriceJob() {
         // given
         Integer year = 2025;
-        BatchJobExecutionResponseDto expected = new BatchJobExecutionResponseDto(
-                true, 4L, "COMPLETED", null, null, "2025", null, null);
+        BatchJobStartResponseDto expected = new BatchJobStartResponseDto(4L, "STARTING", null);
         ArgumentCaptor<UnaryOperator<UriBuilder>> uriCaptor = ArgumentCaptor.forClass(UnaryOperator.class);
-        given(httpTemplate.post(eq("/yearly-price"), eq(BatchJobExecutionResponseDto.class), uriCaptor.capture()))
+        given(httpTemplate.post(eq("/yearly-price"), eq(BatchJobStartResponseDto.class), uriCaptor.capture()))
                 .willReturn(expected);
 
         // when
-        BatchJobExecutionResponseDto result = batchInternalClient.runYearlyPriceJob(year);
+        BatchJobStartResponseDto result = batchInternalClient.runYearlyPriceJob(year);
 
         // then
         assertThat(result).isSameAs(expected);

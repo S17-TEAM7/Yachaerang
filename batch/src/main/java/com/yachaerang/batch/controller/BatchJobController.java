@@ -1,8 +1,11 @@
 package com.yachaerang.batch.controller;
 
+import com.yachaerang.batch.domain.dto.JobStartResponseDto;
+import com.yachaerang.batch.domain.dto.JobStatusResponseDto;
+import com.yachaerang.batch.exception.GeneralException;
 import com.yachaerang.batch.service.BatchJobService;
+import com.yachaerang.batch.service.JobStatusService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
 public class BatchJobController {
 
     private final BatchJobService batchJobService;
+    private final JobStatusService jobStatusService;
 
     /**
      * 수동으로 일별 가격 수집 Job 실행
@@ -35,141 +39,109 @@ public class BatchJobController {
     }
 
     /**
+     * Job 실행 상태 조회
+     */
+    @GetMapping("/job-status/{jobId}")
+    public ResponseEntity<JobStatusResponseDto> getJobStatus(@PathVariable Long jobId) {
+        try {
+            JobStatusResponseDto response = jobStatusService.getJobStatus(jobId);
+            return ResponseEntity.ok(response);
+        } catch (GeneralException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
      * 기간 범위 데이터 수집
-     * 일자를 기준으로 기간에 대하여 일별 데이터 수집
+     * jobId를 즉시 반환하며, 실제 실행은 백그라운드
      */
     @PostMapping("/date-range")
-    public ResponseEntity<Map<String, Object>> collectDateRange(
+    public ResponseEntity<JobStartResponseDto> collectDateRange(
             @RequestParam(name = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(name = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        Map<String, Object> response = new HashMap<>();
         try {
-            JobExecution execution = batchJobService.collectDateRange(startDate, endDate);
-            response.put("success", true);
-            response.put("jobId", execution.getJobId());
-            response.put("status", execution.getStatus().toString());
-            response.put("startDate", startDate.toString());
-            response.put("endDate", endDate.toString());
-
+            JobStartResponseDto response = batchJobService.collectDateRange(startDate, endDate);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            return ResponseEntity.internalServerError()
+                    .body(
+                            JobStartResponseDto.builder()
+                                    .jobId(null)
+                                    .status("FAILED")
+                                    .message(e.getMessage())
+                    .build());
         }
     }
 
     /**
-     * 특정년도의 특정 week에 대한 조사
-     * 
-     * @param year : 대상 년도
-     * @param week : 대상 주차(N주차)
-     * @return
+     * 특정년도의 특정 week 주간 집계
      */
     @PostMapping("/weekly-price")
-    public ResponseEntity<Map<String, Object>> runWeeklyPriceJob(
+    public ResponseEntity<JobStartResponseDto> runWeeklyPriceJob(
             @RequestParam("year") Integer year,
             @RequestParam("week") Integer week) {
-        Map<String, Object> response = new HashMap<>();
         try {
-            JobExecution execution = batchJobService.runWeeklyAggregation(year, week);
-            response.put("success", true);
-            response.put("jobId", execution.getJobId());
-            response.put("status", execution.getStatus().toString());
-            response.put("year", year.toString());
-            response.put("week", week.toString());
-
+            JobStartResponseDto response = batchJobService.runWeeklyAggregation(year, week);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            return ResponseEntity.internalServerError()
+                    .body(JobStartResponseDto.builder().status("FAILED").message(e.getMessage()).build());
         }
     }
 
     /**
+     * 주간 범위 집계
      */
     @PostMapping("/weekly-price/range")
-    public ResponseEntity<Map<String, Object>> runWeeklyPriceJob(
+    public ResponseEntity<Map<String, Object>> collectWeeklyRange(
             @RequestParam("startYear") Integer startYear,
             @RequestParam("startWeek") Integer startWeek,
             @RequestParam("endYear") Integer endYear,
             @RequestParam("endWeek") Integer endWeek) {
         Map<String, Object> response = new HashMap<>();
         try {
-            List<JobExecution> executionList = batchJobService.collectWeekly(startYear, startWeek, endYear, endWeek);
-
-            // 공통 응답 데이터
-            response.put("success", true);
-
-            response.put("jobIdList", executionList.stream()
-                    .map(JobExecution::getJobId)
+            List<JobStartResponseDto> resultList = batchJobService.collectWeekly(startYear, startWeek, endYear, endWeek);
+            response.put("jobIdList", resultList.stream()
+                    .map(JobStartResponseDto::getJobId)
                     .collect(Collectors.toList()));
-            response.put("statusList", executionList.stream()
-                    .map(JobExecution::getStatus)
+            response.put("statusList", resultList.stream()
+                    .map(JobStartResponseDto::getStatus)
                     .collect(Collectors.toList()));
-
-            response.put("parameters", executionList.stream()
-                    .map(jobExecution -> jobExecution.getJobParameters().getParameters())
-                    .map(params -> params.values().stream()
-                            .map(param -> param.getValue())
-                            .collect(Collectors.toList()))
-                    .collect(Collectors.toList()));
-
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
-            response.put("success", false);
             response.put("error", e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
     }
 
-    /*
-     * 특정 월의 월간 집계 데이터 구하기
+    /**
+     * 특정 월의 월간 집계
      */
     @PostMapping("/monthly-price")
-    public ResponseEntity<Map<String, Object>> runMonthlyPriceJob(
+    public ResponseEntity<JobStartResponseDto> runMonthlyPriceJob(
             @RequestParam("year") Integer year,
             @RequestParam("month") Integer month) throws JobExecutionException {
-
-        Map<String, Object> response = new HashMap<>();
         try {
-            JobExecution execution = batchJobService.runMonthlyAggregation(year, month);
-            response.put("success", true);
-            response.put("jobId", execution.getJobId());
-            response.put("status", execution.getStatus().toString());
-            response.put("year", year.toString());
-            response.put("month", month.toString());
-
+            JobStartResponseDto response = batchJobService.runMonthlyAggregation(year, month);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            return ResponseEntity.internalServerError()
+                    .body(JobStartResponseDto.builder().status("FAILED").message(e.getMessage()).build());
         }
     }
 
-    /*
-     * 특정 년도의 연간 데이터 구하기
+    /**
+     * 특정 년도의 연간 집계
      */
     @PostMapping("/yearly-price")
-    public ResponseEntity<Map<String, Object>> runYearlyPriceJob(@RequestParam Integer year) {
-
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<JobStartResponseDto> runYearlyPriceJob(@RequestParam Integer year) {
         try {
-            JobExecution execution = batchJobService.runYearlyAggregation(year);
-            response.put("success", true);
-            response.put("jobId", execution.getJobId());
-            response.put("status", execution.getStatus().toString());
-            response.put("year", year.toString());
-
+            JobStartResponseDto response = batchJobService.runYearlyAggregation(year);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
+            return ResponseEntity.internalServerError()
+                    .body(JobStartResponseDto.builder().status("FAILED").message(e.getMessage()).build());
         }
     }
 }

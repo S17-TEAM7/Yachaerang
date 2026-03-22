@@ -4,7 +4,8 @@ import com.yachaerang.backend.global.exception.BatchException;
 import com.yachaerang.backend.global.response.ErrorCode;
 import com.yachaerang.backend.infrastructure.batch.client.BatchInternalClient;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchDailyResponseDto;
-import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobExecutionResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStartResponseDto;
+import com.yachaerang.backend.infrastructure.batch.dto.response.BatchJobStatusResponseDto;
 import com.yachaerang.backend.infrastructure.batch.dto.response.BatchWeeklyRangeResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,13 +39,12 @@ class BatchApiServiceTest {
         return new BatchDailyResponseDto("COMPLETED", TARGET_DATE.toString());
     }
 
-    private BatchJobExecutionResponseDto executionResponse() {
-        return new BatchJobExecutionResponseDto(true, 1L, "COMPLETED",
-                null, null, null, null, null);
+    private BatchJobStartResponseDto startResponse() {
+        return new BatchJobStartResponseDto(1L, "STARTING", "Batch job accepted");
     }
 
     private BatchWeeklyRangeResponseDto weeklyRangeResponse() {
-        return new BatchWeeklyRangeResponseDto(true, List.of(1L, 2L), List.of("COMPLETED", "COMPLETED"));
+        return new BatchWeeklyRangeResponseDto(null, List.of(1L, 2L), List.of("STARTING", "STARTING"));
     }
 
     @Test
@@ -80,15 +81,15 @@ class BatchApiServiceTest {
     @DisplayName("기간 범위 데이터 수집 성공")
     void 기간_범위_데이터_수집_성공() {
         // given
-        when(batchInternalClient.collectDateRange(START_DATE, END_DATE)).thenReturn(executionResponse());
+        when(batchInternalClient.collectDateRange(START_DATE, END_DATE)).thenReturn(startResponse());
 
         // when
-        BatchJobExecutionResponseDto result = batchApiService.collectDateRange(START_DATE, END_DATE);
+        BatchJobStartResponseDto result = batchApiService.collectDateRange(START_DATE, END_DATE);
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getSuccess()).isTrue();
         assertThat(result.getJobId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo("STARTING");
         verify(batchInternalClient).collectDateRange(START_DATE, END_DATE);
     }
 
@@ -106,20 +107,53 @@ class BatchApiServiceTest {
     }
 
     @Test
-    @DisplayName("주간 가격 집계 성공")
-    void 주간_가격_집계_성공() {
+    @DisplayName("Job 상태 조회 성공")
+    void Job_상태_조회_성공() {
         // given
-        when(batchInternalClient.runWeeklyPriceJob(2025, 11)).thenReturn(executionResponse());
+        BatchJobStatusResponseDto expected = new BatchJobStatusResponseDto(
+                1L, "dateRangePriceJob", "COMPLETED", "COMPLETED",
+                LocalDateTime.of(2025, 3, 18, 10, 0), LocalDateTime.of(2025, 3, 18, 10, 5),
+                "Job 완료", null);
+        when(batchInternalClient.getJobStatus(1L)).thenReturn(expected);
 
         // when
-        BatchJobExecutionResponseDto result = batchApiService.runWeeklyPriceJob(2025, 11);
+        BatchJobStatusResponseDto result = batchApiService.getJobStatus(1L);
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getSuccess()).isTrue();
-        verify(batchInternalClient).runWeeklyPriceJob(2025, 11);
+        assertThat(result.getJobId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        verify(batchInternalClient).getJobStatus(1L);
     }
 
+    @Test
+    @DisplayName("존재하지 않는 Job 조회 시 BatchException 전파")
+    void Job_상태_조회_없는_Job() {
+        // given
+        when(batchInternalClient.getJobStatus(999L))
+                .thenThrow(BatchException.of(ErrorCode.BATCH_JOB_NOT_FOUND));
+
+        // when & then
+        assertThatThrownBy(() -> batchApiService.getJobStatus(999L))
+                .isInstanceOf(BatchException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.BATCH_JOB_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("주간 가격 집계 성공")
+    void 주간_가격_집계_성공() {
+        // given
+        when(batchInternalClient.runWeeklyPriceJob(2025, 11)).thenReturn(startResponse());
+
+        // when
+        BatchJobStartResponseDto result = batchApiService.runWeeklyPriceJob(2025, 11);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getJobId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo("STARTING");
+        verify(batchInternalClient).runWeeklyPriceJob(2025, 11);
+    }
 
     @Test
     @DisplayName("주간 범위 집계 성공")
@@ -133,9 +167,8 @@ class BatchApiServiceTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getSuccess()).isTrue();
         assertThat(result.getJobIdList()).hasSize(2);
-        assertThat(result.getStatusList()).containsOnly("COMPLETED");
+        assertThat(result.getStatusList()).containsOnly("STARTING");
         verify(batchInternalClient).collectWeeklyRange(2025, 1, 2025, 11);
     }
 
@@ -156,30 +189,31 @@ class BatchApiServiceTest {
     @DisplayName("월간 가격 집계 성공")
     void 월간_가격_집계_성공() {
         // given
-        when(batchInternalClient.runMonthlyPriceJob(2025, 3)).thenReturn(executionResponse());
+        when(batchInternalClient.runMonthlyPriceJob(2025, 3)).thenReturn(startResponse());
 
         // when
-        BatchJobExecutionResponseDto result = batchApiService.runMonthlyPriceJob(2025, 3);
+        BatchJobStartResponseDto result = batchApiService.runMonthlyPriceJob(2025, 3);
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getJobId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo("STARTING");
         verify(batchInternalClient).runMonthlyPriceJob(2025, 3);
     }
-
 
     @Test
     @DisplayName("연간 가격 집계 성공")
     void 연간_가격_집계_성공() {
         // given
-        when(batchInternalClient.runYearlyPriceJob(2025)).thenReturn(executionResponse());
+        when(batchInternalClient.runYearlyPriceJob(2025)).thenReturn(startResponse());
 
         // when
-        BatchJobExecutionResponseDto result = batchApiService.runYearlyPriceJob(2025);
+        BatchJobStartResponseDto result = batchApiService.runYearlyPriceJob(2025);
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getJobId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo("STARTING");
         verify(batchInternalClient).runYearlyPriceJob(2025);
     }
 
