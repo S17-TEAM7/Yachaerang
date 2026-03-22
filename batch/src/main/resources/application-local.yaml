@@ -15,7 +15,7 @@ spring:
   data:
     redis:
       host: ${LOCAL_REDIS_HOST}
-      port: ${LOCAL_REDIS_PORT}
+      port: 6379
       password: ${LOCAL_REDIS_PASSWORD}
 
   datasource-meta:
