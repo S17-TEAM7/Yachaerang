@@ -17,38 +17,6 @@
         <result property="priceChange" column="price_change"/>
         <result property="priceChangeRate" column="price_change_rate"/>
     </resultMap>
-    <!-- 일별 데이터를 주간으로 집계하여 조회 -->
-    <select id="selectWeeklyAggregatedPrices" resultMap="weeklyPriceResultMap">
-        SELECT agg.product_code AS product_code,
-               agg.price_year AS price_year,
-               agg.week_number AS week_number,
-               #{startDate} AS start_date,
-               #{endDate} AS end_date,
-               agg.avg_price AS avg_price,
-               agg.max_price AS max_price,
-               agg.min_price AS min_price,
-               agg.price_count AS price_count
-        FROM (
-            SELECT dp.product_code AS product_code,
-                YEAR(dp.price_date) AS price_year,
-                WEEK(dp.price_date, 1) AS week_number,
-                ROUND(AVG(dp.price), 2) AS avg_price,
-                MAX(dp.price) AS max_price,
-                MIN(dp.price) AS min_price,
-                COUNT(*) AS price_count
-            FROM daily_price dp
-            WHERE dp.price_date BETWEEN #{startDate} AND #{endDate}
-            GROUP BY dp.product_code, YEAR(dp.price_date), WEEK(dp.price_date, 1)
-            ) agg
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM weekly_price wp
-            WHERE wp.product_code = agg.product_code
-              AND wp.price_year = agg.price_year
-              AND wp.week_number = agg.week_number
-        )
-    </select>
-
     <!-- 주간 가격 데이터 저장 (UPSERT) -->
     <insert id="upsertWeeklyPrice" parameterType="com.yachaerang.batch.domain.entity.WeeklyPrice">
         INSERT INTO weekly_price (
