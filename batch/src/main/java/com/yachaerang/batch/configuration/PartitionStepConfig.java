@@ -10,14 +10,14 @@ import java.util.concurrent.RejectedExecutionException;
 public class PartitionStepConfig {
 
     private static final int PARTITION_CORE_POOL_SIZE = 10;
-    private static final int PARTITION_MAX_POLL_SIZE = 20;
+    private static final int PARTITION_MAX_POOL_SIZE = 20;
     private static final int PARTITION_QUEUE_CAPACITY = 100;
 
     @Bean
     public ThreadPoolTaskExecutor partitionTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(PARTITION_CORE_POOL_SIZE);
-        executor.setMaxPoolSize(PARTITION_MAX_POLL_SIZE);
+        executor.setMaxPoolSize(PARTITION_MAX_POOL_SIZE);
         executor.setQueueCapacity(PARTITION_QUEUE_CAPACITY);
         executor.setThreadNamePrefix("partition-worker-");
         executor.setWaitForTasksToCompleteOnShutdown(true);
