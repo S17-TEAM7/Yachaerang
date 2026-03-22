@@ -14,11 +14,11 @@ public class AsyncBatchConfig {
 
     private static final int CORE_POOL_SIZE = 10;
     private static final int MAX_POOL_SIZE = 20;
-    private static final int QUEUE_CAPACITY = 100;
+    private static final int QUEUE_CAPACITY = 50;
     private static final int KEEP_ALIVE_SEC = 30;
 
     @Bean
-    public ThreadPoolTaskExecutor batchTaskExecutor() {
+    public ThreadPoolTaskExecutor jobTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(CORE_POOL_SIZE);
         executor.setMaxPoolSize(MAX_POOL_SIZE);
@@ -26,7 +26,7 @@ public class AsyncBatchConfig {
         executor.setKeepAliveSeconds(KEEP_ALIVE_SEC);
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(10);
-        executor.setThreadNamePrefix("batch-job-");
+        executor.setThreadNamePrefix("job-launcher-");
         executor.initialize();
         return executor;
     }
@@ -35,7 +35,7 @@ public class AsyncBatchConfig {
     public JobLauncher asyncJobLauncher(JobRepository jobRepository) throws Exception {
         TaskExecutorJobLauncher launcher = new TaskExecutorJobLauncher();
         launcher.setJobRepository(jobRepository);
-        launcher.setTaskExecutor(batchTaskExecutor());
+        launcher.setTaskExecutor(jobTaskExecutor());
         launcher.afterPropertiesSet();
         return launcher;
     }

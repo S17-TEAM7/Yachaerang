@@ -53,7 +53,7 @@ public class DateRangePriceJobConfig {
     private final KamisApiService kamisApiService;
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
-    private final ThreadPoolTaskExecutor batchTaskExecutor;
+    private final ThreadPoolTaskExecutor partitionTaskExecutor;
 
     private static final int CHUNK_SIZE = 100;
     private static final List<String> CATEGORY_CODES = List.of("100", "200", "300", "400", "500", "600");
@@ -79,7 +79,7 @@ public class DateRangePriceJobConfig {
         return new StepBuilder("dateRangePartitionStep", jobRepository)
                 .partitioner("dailyStepPartitioner", dateRangePartitioner(null, null))
                 .step(partitionedPriceStep())
-                .taskExecutor(batchTaskExecutor)
+                .taskExecutor(partitionTaskExecutor)
                 .gridSize(CATEGORY_CODES.size())
                 .build();
     }

@@ -53,7 +53,7 @@ public class DailyPriceJobConfig {
     private final KamisApiService kamisApiService;
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
-    private final ThreadPoolTaskExecutor batchTaskExecutor;
+    private final ThreadPoolTaskExecutor partitionTaskExecutor;
 
     private static final int CHUNK_SIZE = 500;
     private static final List<String> CATEGORY_CODES = List.of("100", "200", "300", "400", "500", "600");
@@ -79,7 +79,7 @@ public class DailyPriceJobConfig {
         return new StepBuilder("dailyPricePartitionStep", jobRepository)
                 .partitioner("dailyCategoryPartitioner", dailyCategoryPartitioner(null))
                 .step(dailyPriceWorkerStep())
-                .taskExecutor(batchTaskExecutor)
+                .taskExecutor(partitionTaskExecutor)
                 .gridSize(CATEGORY_CODES.size())
                 .build();
     }
