@@ -12,6 +12,7 @@ import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.repository.ProductRepository;
 import com.yachaerang.batch.service.KamisApiService;
+import com.yachaerang.batch.service.RedisAggregationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -53,6 +54,7 @@ public class DailyPriceJobConfig {
     private final KamisApiService kamisApiService;
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
+    private final RedisAggregationService redisAggregationService;
     private final ThreadPoolTaskExecutor batchTaskExecutor;
 
     private static final int CHUNK_SIZE = 500;
@@ -169,6 +171,6 @@ public class DailyPriceJobConfig {
      */
     @Bean
     public DailyPriceWriter dailyPriceWriter() {
-        return new DailyPriceWriter(dailyPriceRepository);
+        return new DailyPriceWriter(dailyPriceRepository, redisAggregationService);
     }
 }
