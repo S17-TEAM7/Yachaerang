@@ -7,8 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 @Service
@@ -18,19 +16,14 @@ import java.util.List;
 public class MonthlyPriceAggregationService {
 
     private final MonthlyPriceRepository monthlyPriceRepository;
+    private final RedisAggregationService redisAggregationService;
 
     /**
      * 월간 집계 데이터 조회
      */
     public List<MonthlyPrice> getMonthlyAggregatedPrices(int year, int month) {
         log.info("월간 집계 데이터 조회 - 기간: {}년 {}월", year, month);
-
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDate endDate = LocalDate.of(year, month, 1)
-                .with(TemporalAdjusters.lastDayOfMonth());
-
-        List<MonthlyPrice> results = monthlyPriceRepository.selectMonthlyAggregatedPrices(startDate, endDate);
-
+        List<MonthlyPrice> results = redisAggregationService.getMonthlyAggregatedPrices(year, month);
         log.info("조회된 집계 데이터: {} 건", results.size());
         return results;
     }
