@@ -12,7 +12,6 @@ import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.repository.ProductRepository;
 import com.yachaerang.batch.service.KamisApiService;
-import com.yachaerang.batch.service.RedisAggregationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -54,8 +53,7 @@ public class DailyPriceJobConfig {
     private final KamisApiService kamisApiService;
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
-    private final RedisAggregationService redisAggregationService;
-    private final ThreadPoolTaskExecutor batchTaskExecutor;
+    private final ThreadPoolTaskExecutor partitionTaskExecutor;
 
     private static final int CHUNK_SIZE = 500;
     private static final List<String> CATEGORY_CODES = List.of("100", "200", "300", "400", "500", "600");
@@ -81,7 +79,7 @@ public class DailyPriceJobConfig {
         return new StepBuilder("dailyPricePartitionStep", jobRepository)
                 .partitioner("dailyCategoryPartitioner", dailyCategoryPartitioner(null))
                 .step(dailyPriceWorkerStep())
-                .taskExecutor(batchTaskExecutor)
+                .taskExecutor(partitionTaskExecutor)
                 .gridSize(CATEGORY_CODES.size())
                 .build();
     }
@@ -171,6 +169,6 @@ public class DailyPriceJobConfig {
      */
     @Bean
     public DailyPriceWriter dailyPriceWriter() {
-        return new DailyPriceWriter(dailyPriceRepository, redisAggregationService);
+        return new DailyPriceWriter(dailyPriceRepository);
     }
 }
