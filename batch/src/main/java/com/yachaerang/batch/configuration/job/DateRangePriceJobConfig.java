@@ -12,6 +12,7 @@ import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.repository.ProductRepository;
 import com.yachaerang.batch.service.KamisApiService;
+import com.yachaerang.batch.service.RedisAggregationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -23,6 +24,7 @@ import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -53,6 +55,8 @@ public class DateRangePriceJobConfig {
     private final KamisApiService kamisApiService;
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
+    private final RedisAggregationService redisAggregationService;
+    @Qualifier("partitionTaskExecutor")
     private final ThreadPoolTaskExecutor partitionTaskExecutor;
 
     private static final int CHUNK_SIZE = 100;
@@ -173,6 +177,6 @@ public class DateRangePriceJobConfig {
 
     @Bean
     public DailyPriceWriter partitionedPriceWriter() {
-        return new DailyPriceWriter(dailyPriceRepository);
+        return new DailyPriceWriter(dailyPriceRepository, redisAggregationService);
     }
 }
