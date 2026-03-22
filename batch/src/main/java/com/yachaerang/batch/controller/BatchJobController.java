@@ -144,4 +144,19 @@ public class BatchJobController {
                     .body(JobStartResponseDto.builder().status("FAILED").message(e.getMessage()).build());
         }
     }
+
+    /**
+     * Redis 집계 초기화 (일회성 수동 실행)
+     * daily_price 전체 데이터를 Redis에 반영
+     */
+    @PostMapping("/redis-init")
+    public ResponseEntity<JobStartResponseDto> runRedisInit() {
+        try {
+            JobStartResponseDto response = batchJobService.runRedisInit();
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(JobStartResponseDto.builder().status("FAILED").message(e.getMessage()).build());
+        }
+    }
 }
