@@ -1,4 +1,4 @@
-package com.yachaerang.batch.service;
+package com.yachaerang.batch.service.job;
 
 import com.yachaerang.batch.domain.dto.JobStartResponseDto;
 import com.yachaerang.batch.exception.GeneralException;

@@ -1,4 +1,4 @@
-package com.yachaerang.batch.service;
+package com.yachaerang.batch.service.external;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
