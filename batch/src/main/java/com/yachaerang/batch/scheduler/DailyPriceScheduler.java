@@ -1,6 +1,6 @@
 package com.yachaerang.batch.scheduler;
 
-import com.yachaerang.batch.service.BatchJobService;
+import com.yachaerang.batch.service.job.BatchJobService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

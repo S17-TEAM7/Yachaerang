@@ -1,7 +1,7 @@
 package com.yachaerang.batch.domain.dailyPrice.reader;
 
 import com.yachaerang.batch.domain.dto.KamisPriceItem;
-import com.yachaerang.batch.service.KamisApiService;
+import com.yachaerang.batch.service.external.KamisApiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemReader;
 
