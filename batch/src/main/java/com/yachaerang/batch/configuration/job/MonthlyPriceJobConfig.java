@@ -7,8 +7,8 @@ import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.listener.MdcStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
-import com.yachaerang.batch.service.MonthlyPriceAggregationService;
-import com.yachaerang.batch.service.RedisAggregationService;
+import com.yachaerang.batch.service.aggregation.MonthlyPriceAggregationService;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -41,7 +41,7 @@ public class MonthlyPriceJobConfig {
     private final ItemSkipListener itemSkipListener;
 
     private final MonthlyPriceAggregationService monthlyPriceAggregationService;
-    private final RedisAggregationService redisAggregationService;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
 
     private static final int CHUNK_SIZE= 100;
@@ -105,7 +105,7 @@ public class MonthlyPriceJobConfig {
     @Bean
     @StepScope
     public MonthlyPriceProcessor monthlyPriceProcessor() {
-        return new MonthlyPriceProcessor(redisAggregationService);
+        return new MonthlyPriceProcessor(redisAggregationQueryService);
     }
 
     /**

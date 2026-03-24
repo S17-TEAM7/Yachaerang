@@ -3,7 +3,7 @@ package com.yachaerang.batch.configuration.job;
 import com.yachaerang.batch.domain.entity.DailyPrice;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
-import com.yachaerang.batch.service.RedisAggregationService;
+import com.yachaerang.batch.service.redis.RedisAggregationWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -33,7 +33,7 @@ public class RedisAggregationInitJobConfig {
     private final PlatformTransactionManager platformTransactionManager;
     private final JobCompletionListener jobCompletionListener;
     private final DailyPriceRepository dailyPriceRepository;
-    private final RedisAggregationService redisAggregationService;
+    private final RedisAggregationWriter redisAggregationWriter;
 
     private static final int CHUNK_SIZE = 1000;
 
@@ -89,7 +89,7 @@ public class RedisAggregationInitJobConfig {
     public ItemWriter<DailyPrice> redisAggregationInitWriter() {
         return chunk -> {
             List<? extends DailyPrice> items = chunk.getItems();
-            items.forEach(redisAggregationService::updateAggregations);
+            items.forEach(redisAggregationWriter::updateAggregations);
             log.debug("Redis 집계 업데이트: {} 건", items.size());
         };
     }

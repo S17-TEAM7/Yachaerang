@@ -1,7 +1,7 @@
 package com.yachaerang.batch.domain.processor;
 
 import com.yachaerang.batch.domain.entity.MonthlyPrice;
-import com.yachaerang.batch.service.RedisAggregationService;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
@@ -13,7 +13,7 @@ import java.math.RoundingMode;
 @RequiredArgsConstructor
 public class MonthlyPriceProcessor implements ItemProcessor<MonthlyPrice, MonthlyPrice> {
 
-    private final RedisAggregationService redisAggregationService;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
     @Override
     public MonthlyPrice process(MonthlyPrice item) throws Exception {
@@ -29,8 +29,8 @@ public class MonthlyPriceProcessor implements ItemProcessor<MonthlyPrice, Monthl
         Integer priceMonth = item.getPriceMonth();
 
         // 해당 월의 시작/종료 가격 조회
-        Long startPrice = redisAggregationService.getMonthlyStartPrice(productCode, priceYear, priceMonth);
-        Long endPrice   = redisAggregationService.getMonthlyEndPrice(productCode, priceYear, priceMonth);
+        Long startPrice = redisAggregationQueryService.getMonthlyStartPrice(productCode, priceYear, priceMonth);
+        Long endPrice   = redisAggregationQueryService.getMonthlyEndPrice(productCode, priceYear, priceMonth);
 
         // 계산
         Long priceChange = 0L;

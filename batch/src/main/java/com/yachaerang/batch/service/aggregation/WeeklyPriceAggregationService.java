@@ -1,7 +1,8 @@
-package com.yachaerang.batch.service;
+package com.yachaerang.batch.service.aggregation;
 
 import com.yachaerang.batch.domain.entity.WeeklyPrice;
 import com.yachaerang.batch.repository.WeeklyPriceRepository;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,14 +21,14 @@ import java.util.List;
 public class WeeklyPriceAggregationService {
 
     private final WeeklyPriceRepository weeklyPriceRepository;
-    private final RedisAggregationService redisAggregationService;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
     /**
      * 주간 집계 데이터 조회
      */
     public List<WeeklyPrice> getWeeklyAggregatedPrices(LocalDate startDate, LocalDate endDate) {
         log.info("주간 집계 데이터 조회 - 기간: {} ~ {}", startDate, endDate);
-        List<WeeklyPrice> results = redisAggregationService.getWeeklyAggregatedPrices(startDate, endDate);
+        List<WeeklyPrice> results = redisAggregationQueryService.getWeeklyAggregatedPrices(startDate, endDate);
         log.info("조회된 집계 데이터: {} 건", results.size());
         return results;
     }

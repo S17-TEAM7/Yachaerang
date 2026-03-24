@@ -1,7 +1,8 @@
-package com.yachaerang.batch.service;
+package com.yachaerang.batch.service.aggregation;
 
 import com.yachaerang.batch.domain.entity.MonthlyPrice;
 import com.yachaerang.batch.repository.MonthlyPriceRepository;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,14 +17,14 @@ import java.util.List;
 public class MonthlyPriceAggregationService {
 
     private final MonthlyPriceRepository monthlyPriceRepository;
-    private final RedisAggregationService redisAggregationService;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
     /**
      * 월간 집계 데이터 조회
      */
     public List<MonthlyPrice> getMonthlyAggregatedPrices(int year, int month) {
         log.info("월간 집계 데이터 조회 - 기간: {}년 {}월", year, month);
-        List<MonthlyPrice> results = redisAggregationService.getMonthlyAggregatedPrices(year, month);
+        List<MonthlyPrice> results = redisAggregationQueryService.getMonthlyAggregatedPrices(year, month);
         log.info("조회된 집계 데이터: {} 건", results.size());
         return results;
     }

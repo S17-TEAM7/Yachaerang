@@ -1,7 +1,7 @@
 package com.yachaerang.batch.domain.processor;
 
 import com.yachaerang.batch.domain.entity.WeeklyPrice;
-import com.yachaerang.batch.service.RedisAggregationService;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
@@ -13,7 +13,7 @@ import java.math.RoundingMode;
 @RequiredArgsConstructor
 public class WeeklyPriceProcessor implements ItemProcessor<WeeklyPrice, WeeklyPrice> {
 
-    private final RedisAggregationService redisAggregationService;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
     @Override
     public WeeklyPrice process(WeeklyPrice item) throws Exception {
@@ -29,9 +29,9 @@ public class WeeklyPriceProcessor implements ItemProcessor<WeeklyPrice, WeeklyPr
         int weekNum = item.getWeekNumber();
 
         // 해당 주차의 시작 가격 조회
-        Long startPrice = redisAggregationService.getWeeklyStartPrice(productCode, year, weekNum);
+        Long startPrice = redisAggregationQueryService.getWeeklyStartPrice(productCode, year, weekNum);
         // 해당 주차의 종료 가격 조회
-        Long endPrice = redisAggregationService.getWeeklyEndPrice(productCode, year, weekNum);
+        Long endPrice = redisAggregationQueryService.getWeeklyEndPrice(productCode, year, weekNum);
 
         // 계산
         Long priceChange = 0L;

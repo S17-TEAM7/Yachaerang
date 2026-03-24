@@ -2,7 +2,7 @@ package com.yachaerang.batch.domain.dailyPrice.writer;
 
 import com.yachaerang.batch.domain.entity.DailyPrice;
 import com.yachaerang.batch.repository.DailyPriceRepository;
-import com.yachaerang.batch.service.RedisAggregationService;
+import com.yachaerang.batch.service.redis.RedisAggregationWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.Chunk;
@@ -19,7 +19,7 @@ Daily Price Job의 Writer
 public class DailyPriceWriter implements ItemWriter<DailyPrice> {
 
     private final DailyPriceRepository dailyPriceRepository;
-    private final RedisAggregationService redisAggregationService;
+    private final RedisAggregationWriter redisAggregationWriter;
 
     /*
     write
@@ -35,7 +35,7 @@ public class DailyPriceWriter implements ItemWriter<DailyPrice> {
             log.warn("일부 insert 실패: {} / {}", inserted, chunk.size());
         }
 
-        items.forEach(redisAggregationService::updateAggregations);
+        items.forEach(redisAggregationWriter::updateAggregations);
         log.debug("저장 및 Redis 집계 업데이트 완료");
     }
 }
