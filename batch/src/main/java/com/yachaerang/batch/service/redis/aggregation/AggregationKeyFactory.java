@@ -10,27 +10,27 @@ import static com.yachaerang.batch.service.redis.RedisAggregationKeys.*;
 @Component
 class AggregationKeyFactory {
 
-    String weeklyHashKey(String productCode, int year, int weekNum) {
-        return String.format(AGG_WEEKLY_KEY, productCode, year, weekNum);
+    String weeklyHashKey(long version, String productCode, int year, int weekNum) {
+        return String.format(AGG_WEEKLY_KEY, version, productCode, year, weekNum);
     }
 
-    String monthlyHashKey(String productCode, int year, int month) {
-        return String.format(AGG_MONTHLY_KEY, productCode, year, month);
+    String monthlyHashKey(long version, String productCode, int year, int month) {
+        return String.format(AGG_MONTHLY_KEY, version, productCode, year, month);
     }
 
-    String yearlyHashKey(String productCode, int year) {
-        return String.format(AGG_YEARLY_KEY, productCode, year);
+    String yearlyHashKey(long version, String productCode, int year) {
+        return String.format(AGG_YEARLY_KEY, version, productCode, year);
     }
 
-    String weeklyIndexKey(int year, int weekNum) {
-        return String.format(IDX_WEEKLY_KEY, year, weekNum);
+    String weeklyIndexKey(long version, int year, int weekNum) {
+        return String.format(IDX_WEEKLY_KEY, version, year, weekNum);
     }
 
-    String monthlyIndexKey(int year, int month) {
-        return String.format(IDX_MONTHLY_KEY, year, month);
+    String monthlyIndexKey(long version, int year, int month) {
+        return String.format(IDX_MONTHLY_KEY, version, year, month);
     }
 
-    String yearlyIndexKey(int year) {
-        return String.format(IDX_YEARLY_KEY, year);
+    String yearlyIndexKey(long version, int year) {
+        return String.format(IDX_YEARLY_KEY, version, year);
     }
 }
