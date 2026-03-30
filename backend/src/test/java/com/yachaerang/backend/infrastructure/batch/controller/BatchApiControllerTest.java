@@ -245,4 +245,24 @@ class BatchApiControllerTest extends RestDocsSupport {
                         )
                 ));
     }
+
+    @Test
+    @DisplayName("[POST] /api/batch/redis-init - Redis 집계 초기화")
+    void runRedisInit() throws Exception {
+        // given
+        given(batchApiService.runRedisInit())
+                .willReturn(new BatchJobStartResponseDto(1L, "STARTING", null));
+
+        // when & then
+        mockMvc.perform(post("/api/batch/redis-init"))
+                .andExpect(status().isOk())
+                .andDo(doc(
+                        "batch-redis-init",
+                        requestHeaders(),
+                        responseFields(ENVELOPE_COMMON).and(
+                                fieldWithPath("data.jobId").type(NUMBER).description("비동기 Job ID"),
+                                fieldWithPath("data.status").type(STRING).description("Job 접수 상태 (STARTING)")
+                        )
+                ));
+    }
 }
