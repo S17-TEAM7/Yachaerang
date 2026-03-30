@@ -20,7 +20,7 @@ public class DailyPriceWriter implements ItemWriter<DailyPrice> {
     private final DailyPriceRepository dailyPriceRepository;
 
     /*
-    write
+    DB write
      */
     @Override
     public void write(Chunk<? extends DailyPrice> chunk) {
@@ -29,9 +29,8 @@ public class DailyPriceWriter implements ItemWriter<DailyPrice> {
         List<DailyPrice> items = new ArrayList<>(chunk.getItems());
         int inserted = dailyPriceRepository.saveAll(items);
 
-        if(inserted != chunk.size()) {
+        if (inserted != chunk.size()) {
             log.warn("일부 insert 실패: {} / {}", inserted, chunk.size());
         }
-        log.debug("저장 완료");
     }
 }

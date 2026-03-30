@@ -75,6 +75,11 @@ public class LoggingFilter extends OncePerRequestFilter {
      Request 기록
      */
     private void logRequest(HttpServletRequest request, String requestId) {
+
+        if (request.getRequestURI().startsWith("/actuator/prometheus")) {
+            return;
+        }
+
         String method = request.getMethod();
         String uri = request.getRequestURI();
         String query = request.getQueryString();

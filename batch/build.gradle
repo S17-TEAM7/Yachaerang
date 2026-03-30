@@ -55,6 +55,9 @@ dependencies {
     implementation 'org.flywaydb:flyway-core:9.8.1'
     implementation 'org.flywaydb:flyway-mysql:9.8.1'
 
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     // actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 

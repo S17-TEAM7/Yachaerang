@@ -7,8 +7,8 @@ import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.listener.MdcStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
-import com.yachaerang.batch.repository.DailyPriceRepository;
-import com.yachaerang.batch.service.MonthlyPriceAggregationService;
+import com.yachaerang.batch.service.aggregation.MonthlyPriceAggregationService;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -41,7 +41,7 @@ public class MonthlyPriceJobConfig {
     private final ItemSkipListener itemSkipListener;
 
     private final MonthlyPriceAggregationService monthlyPriceAggregationService;
-    private final DailyPriceRepository dailyPriceRepository;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
 
     private static final int CHUNK_SIZE= 100;
@@ -105,12 +105,11 @@ public class MonthlyPriceJobConfig {
     @Bean
     @StepScope
     public MonthlyPriceProcessor monthlyPriceProcessor() {
-        return new MonthlyPriceProcessor(dailyPriceRepository);
+        return new MonthlyPriceProcessor(redisAggregationQueryService);
     }
 
     /**
      * Writer 스텝
-     * 집계 서비스를 통해 대신 MyBatis 실행
      * @return
      */
     @Bean

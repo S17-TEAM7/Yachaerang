@@ -55,4 +55,8 @@ public class BatchInternalClient {
         return httpTemplate.post("/yearly-price", BatchJobStartResponseDto.class,
                 b -> b.queryParam("year", year));
     }
+
+    public BatchJobStartResponseDto runRedisInit() {
+        return httpTemplate.post("/redis-init", BatchJobStartResponseDto.class, b -> b);
+    }
 }

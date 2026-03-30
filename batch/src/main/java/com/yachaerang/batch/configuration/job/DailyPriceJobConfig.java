@@ -8,10 +8,12 @@ import com.yachaerang.batch.domain.entity.DailyPrice;
 import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.listener.MdcStepListener;
+import com.yachaerang.batch.listener.RedisVersionStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.repository.ProductRepository;
-import com.yachaerang.batch.service.KamisApiService;
+import com.yachaerang.batch.service.external.KamisApiService;
+import com.yachaerang.batch.service.redis.RedisAggregationWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -23,6 +25,8 @@ import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +35,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +58,9 @@ public class DailyPriceJobConfig {
     private final KamisApiService kamisApiService;
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
+    private final RedisAggregationWriter redisAggregationWriter;
+    private final RedisVersionStepListener redisVersionStepListener;
+    @Qualifier("partitionTaskExecutor")
     private final ThreadPoolTaskExecutor partitionTaskExecutor;
 
     private static final int CHUNK_SIZE = 500;
@@ -60,7 +68,7 @@ public class DailyPriceJobConfig {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
-     * Job: 카테고리
+     * Job: DB 저장 → Redis 집계 순서로 실행
      */
     @Bean
     public Job dailyPriceJob() {
@@ -68,6 +76,7 @@ public class DailyPriceJobConfig {
                 .incrementer(new RunIdIncrementer())
                 .listener(jobCompletionListener)
                 .start(dailyPricePartitionStep())
+                .next(dailyRedisAggregationStep())
                 .build();
     }
 
@@ -165,10 +174,52 @@ public class DailyPriceJobConfig {
     }
 
     /*
-    Writer Step 등록
+    Writer Step
      */
     @Bean
     public DailyPriceWriter dailyPriceWriter() {
         return new DailyPriceWriter(dailyPriceRepository);
+    }
+
+    /**
+     * Redis 집계 Step: DB에 실제 저장된 데이터를 기준으로 Redis를 갱신
+     */
+    @Bean
+    @StepScope
+    public ItemReader<DailyPrice> dailyRedisAggregationReader(
+            @Value("#{jobParameters['targetDate']}") String targetDateStr) {
+        LocalDate targetDate = (targetDateStr != null && !targetDateStr.isBlank())
+                ? LocalDate.parse(targetDateStr, FORMATTER)
+                : LocalDate.now().minusDays(1);
+        return new ItemReader<>() {
+            private int offset = 0;
+            private List<DailyPrice> buffer = Collections.emptyList();
+            private int bufferIndex = 0;
+
+            @Override
+            public DailyPrice read() {
+                if (bufferIndex >= buffer.size()) {
+                    buffer = dailyPriceRepository.findByPriceDateBetweenPaged(targetDate, targetDate, offset, CHUNK_SIZE);
+                    offset += buffer.size();
+                    bufferIndex = 0;
+                    if (buffer.isEmpty()) {
+                        log.info("Redis 집계 Reader 완료: targetDate={}, 총 {} 건", targetDate, offset);
+                        return null;
+                    }
+                    log.debug("Redis 집계 Reader 페이지 로드: offset={}, size={}", offset - buffer.size(), buffer.size());
+                }
+                return buffer.get(bufferIndex++);
+            }
+        };
+    }
+
+    @Bean
+    public Step dailyRedisAggregationStep() {
+        return new StepBuilder("dailyRedisAggregationStep", jobRepository)
+                .<DailyPrice, DailyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
+                .reader(dailyRedisAggregationReader(null))
+                .writer(chunk -> chunk.getItems().forEach(redisAggregationWriter::updateAggregations))
+                .listener(redisVersionStepListener)
+                .build();
     }
 }

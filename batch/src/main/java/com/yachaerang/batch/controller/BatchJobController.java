@@ -3,8 +3,8 @@ package com.yachaerang.batch.controller;
 import com.yachaerang.batch.domain.dto.JobStartResponseDto;
 import com.yachaerang.batch.domain.dto.JobStatusResponseDto;
 import com.yachaerang.batch.exception.GeneralException;
-import com.yachaerang.batch.service.BatchJobService;
-import com.yachaerang.batch.service.JobStatusService;
+import com.yachaerang.batch.service.job.BatchJobService;
+import com.yachaerang.batch.service.job.JobStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -138,6 +138,21 @@ public class BatchJobController {
     public ResponseEntity<JobStartResponseDto> runYearlyPriceJob(@RequestParam Integer year) {
         try {
             JobStartResponseDto response = batchJobService.runYearlyAggregation(year);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(JobStartResponseDto.builder().status("FAILED").message(e.getMessage()).build());
+        }
+    }
+
+    /**
+     * Redis 집계 초기화 (일회성 수동 실행)
+     * daily_price 전체 데이터를 Redis에 반영
+     */
+    @PostMapping("/redis-init")
+    public ResponseEntity<JobStartResponseDto> runRedisInit() {
+        try {
+            JobStartResponseDto response = batchJobService.runRedisInit();
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.internalServerError()

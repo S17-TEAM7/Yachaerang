@@ -12,6 +12,12 @@ spring:
   flyway:
     enabled: false
 
+  data:
+    redis:
+      host: ${DEV_REDIS_HOST}
+      port: 6379
+      password: ${DEV_REDIS_PASSWORD}
+
   datasource-meta:
     driver-class-name: com.mysql.cj.jdbc.Driver
     jdbc-url: ${DEV_META_DB_URL}

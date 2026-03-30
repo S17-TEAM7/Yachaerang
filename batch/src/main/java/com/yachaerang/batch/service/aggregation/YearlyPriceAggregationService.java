@@ -1,7 +1,8 @@
-package com.yachaerang.batch.service;
+package com.yachaerang.batch.service.aggregation;
 
 import com.yachaerang.batch.domain.entity.YearlyPrice;
 import com.yachaerang.batch.repository.YearlyPriceRepository;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,16 +16,15 @@ import java.util.List;
 public class YearlyPriceAggregationService {
 
     private final YearlyPriceRepository yearlyPriceRepository;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
     /**
      * 연간 집계 데이터 조회
      */
     public List<YearlyPrice> getYearlyAggregatedPrices(int year) {
         log.info("연간 집계 데이터 조회 - 연도: {}", year);
-
-        List<YearlyPrice> result = yearlyPriceRepository.selectYearlyAggregatedPrices(year);
+        List<YearlyPrice> result = redisAggregationQueryService.getYearlyAggregatedPrices(year);
         log.info("조회된 집계 데이터: {} 건", result.size());
-
         return result;
     }
 
@@ -32,14 +32,14 @@ public class YearlyPriceAggregationService {
      * 연초 가격 조회
      */
     public Long getStartPrice(String productCode, int year) {
-        return yearlyPriceRepository.selectStartPrice(productCode, year);
+        return redisAggregationQueryService.getYearlyStartPrice(productCode, year);
     }
 
     /**
      * 연말 가격 조회
      */
     public Long getEndPrice(String productCode, int year) {
-        return yearlyPriceRepository.selectEndPrice(productCode, year);
+        return redisAggregationQueryService.getYearlyEndPrice(productCode, year);
     }
 
     /**

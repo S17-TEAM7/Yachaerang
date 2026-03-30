@@ -1,20 +1,19 @@
 package com.yachaerang.batch.domain.processor;
 
 import com.yachaerang.batch.domain.entity.WeeklyPrice;
-import com.yachaerang.batch.repository.DailyPriceRepository;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 
 @Slf4j
 @RequiredArgsConstructor
 public class WeeklyPriceProcessor implements ItemProcessor<WeeklyPrice, WeeklyPrice> {
 
-    private final DailyPriceRepository dailyPriceRepository;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
     @Override
     public WeeklyPrice process(WeeklyPrice item) throws Exception {
@@ -26,13 +25,13 @@ public class WeeklyPriceProcessor implements ItemProcessor<WeeklyPrice, WeeklyPr
         }
 
         String productCode = item.getProductCode();
-        LocalDate startDate = item.getStartDate();
-        LocalDate endDate = item.getEndDate();
+        int year   = item.getPriceYear();
+        int weekNum = item.getWeekNumber();
 
         // 해당 주차의 시작 가격 조회
-        Long startPrice = dailyPriceRepository.findEarliestPriceInWeek(productCode, startDate, endDate);
+        Long startPrice = redisAggregationQueryService.getWeeklyStartPrice(productCode, year, weekNum);
         // 해당 주차의 종료 가격 조회
-        Long endPrice = dailyPriceRepository.findLatestPriceInWeek(productCode, startDate, endDate);
+        Long endPrice = redisAggregationQueryService.getWeeklyEndPrice(productCode, year, weekNum);
 
         // 계산
         Long priceChange = 0L;
@@ -50,10 +49,10 @@ public class WeeklyPriceProcessor implements ItemProcessor<WeeklyPrice, WeeklyPr
         }
         return WeeklyPrice.builder()
                 .productCode(productCode)
-                .priceYear(item.getPriceYear())
-                .weekNumber(item.getWeekNumber())
-                .startDate(startDate)
-                .endDate(endDate)
+                .priceYear(year)
+                .weekNumber(weekNum)
+                .startDate(item.getStartDate())
+                .endDate(item.getEndDate())
                 .avgPrice(item.getAvgPrice())
                 .minPrice(item.getMinPrice())
                 .maxPrice(item.getMaxPrice())

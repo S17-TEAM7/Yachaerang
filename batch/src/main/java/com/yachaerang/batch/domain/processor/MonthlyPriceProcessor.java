@@ -1,21 +1,19 @@
 package com.yachaerang.batch.domain.processor;
 
 import com.yachaerang.batch.domain.entity.MonthlyPrice;
-import com.yachaerang.batch.repository.DailyPriceRepository;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 
 @Slf4j
 @RequiredArgsConstructor
 public class MonthlyPriceProcessor implements ItemProcessor<MonthlyPrice, MonthlyPrice> {
 
-    private final DailyPriceRepository dailyPriceRepository;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
     @Override
     public MonthlyPrice process(MonthlyPrice item) throws Exception {
@@ -27,15 +25,12 @@ public class MonthlyPriceProcessor implements ItemProcessor<MonthlyPrice, Monthl
         }
 
         String productCode = item.getProductCode();
-        Integer priceYear = item.getPriceYear();
+        Integer priceYear  = item.getPriceYear();
         Integer priceMonth = item.getPriceMonth();
 
-        LocalDate monthStartDate = LocalDate.of(priceYear, priceMonth, 1);
-        LocalDate monthEndDate = LocalDate.of(priceYear, priceMonth, 1)
-                .with(TemporalAdjusters.lastDayOfMonth());
-
-        Long startPrice = dailyPriceRepository.findEarliestPriceInMonth(productCode, monthStartDate, monthEndDate);
-        Long endPrice = dailyPriceRepository.findLatestPriceInMonth(productCode, monthStartDate, monthEndDate);
+        // 해당 월의 시작/종료 가격 조회
+        Long startPrice = redisAggregationQueryService.getMonthlyStartPrice(productCode, priceYear, priceMonth);
+        Long endPrice   = redisAggregationQueryService.getMonthlyEndPrice(productCode, priceYear, priceMonth);
 
         // 계산
         Long priceChange = 0L;

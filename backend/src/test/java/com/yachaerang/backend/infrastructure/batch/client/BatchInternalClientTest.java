@@ -193,4 +193,20 @@ class BatchInternalClientTest {
         uriCaptor.getValue().apply(mockUriBuilder);
         verify(mockUriBuilder).queryParam("year", year);
     }
+
+    @Test
+    @DisplayName("Redis 초기화 Job 실행 시 POST /redis-init 요청을 전달한다")
+    @SuppressWarnings("unchecked")
+    void runRedisInit() {
+        // given
+        BatchJobStartResponseDto expected = new BatchJobStartResponseDto(5L, "STARTING", null);
+        given(httpTemplate.post(eq("/redis-init"), eq(BatchJobStartResponseDto.class), any()))
+                .willReturn(expected);
+
+        // when
+        BatchJobStartResponseDto result = batchInternalClient.runRedisInit();
+
+        // then
+        assertThat(result).isSameAs(expected);
+    }
 }

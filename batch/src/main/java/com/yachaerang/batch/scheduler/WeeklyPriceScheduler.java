@@ -1,6 +1,6 @@
 package com.yachaerang.batch.scheduler;
 
-import com.yachaerang.batch.service.BatchJobService;
+import com.yachaerang.batch.service.job.BatchJobService;
 import com.yachaerang.batch.util.WeekUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

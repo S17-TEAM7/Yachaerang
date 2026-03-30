@@ -229,4 +229,34 @@ class BatchApiServiceTest {
                 .isInstanceOf(BatchException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.BATCH_CALL_FAILED);
     }
+
+    @Test
+    @DisplayName("Redis 집계 초기화 성공")
+    void Redis_집계_초기화_성공() {
+        // given
+        when(batchInternalClient.runRedisInit()).thenReturn(startResponse());
+
+        // when
+        BatchJobStartResponseDto result = batchApiService.runRedisInit();
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getJobId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo("STARTING");
+        verify(batchInternalClient).runRedisInit();
+    }
+
+    @Test
+    @DisplayName("Redis 집계 초기화 중 Batch 서버 오류 시 BatchException 전파")
+    void Redis_집계_초기화_Batch_서버_오류() {
+        // given
+        when(batchInternalClient.runRedisInit())
+                .thenThrow(BatchException.of(ErrorCode.BATCH_CALL_FAILED));
+
+        // when & then
+        assertThatThrownBy(() -> batchApiService.runRedisInit())
+                .isInstanceOf(BatchException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.BATCH_CALL_FAILED);
+        verify(batchInternalClient).runRedisInit();
+    }
 }

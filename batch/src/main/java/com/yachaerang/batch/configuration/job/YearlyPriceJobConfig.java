@@ -6,7 +6,7 @@ import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.listener.MdcStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
-import com.yachaerang.batch.service.YearlyPriceAggregationService;
+import com.yachaerang.batch.service.aggregation.YearlyPriceAggregationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;

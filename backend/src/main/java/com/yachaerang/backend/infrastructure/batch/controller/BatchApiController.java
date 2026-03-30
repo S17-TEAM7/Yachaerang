@@ -85,4 +85,12 @@ public class BatchApiController {
             @RequestParam Integer year) {
         return batchApiService.runYearlyPriceJob(year);
     }
+
+    /**
+     * Redis 집계 초기화
+     */
+    @PostMapping("/redis-init")
+    public BatchJobStartResponseDto runRedisInit() {
+        return batchApiService.runRedisInit();
+    }
 }

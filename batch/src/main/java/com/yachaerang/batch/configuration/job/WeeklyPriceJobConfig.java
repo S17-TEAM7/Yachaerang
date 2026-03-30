@@ -7,8 +7,8 @@ import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.listener.MdcStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
-import com.yachaerang.batch.repository.DailyPriceRepository;
-import com.yachaerang.batch.service.WeeklyPriceAggregationService;
+import com.yachaerang.batch.service.redis.aggregation.RedisAggregationQueryService;
+import com.yachaerang.batch.service.aggregation.WeeklyPriceAggregationService;
 import com.yachaerang.batch.util.WeekUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +42,7 @@ public class WeeklyPriceJobConfig {
     private final ItemSkipListener itemSkipListener;
 
     private final WeeklyPriceAggregationService weeklyPriceAggregationService;
-    private final DailyPriceRepository dailyPriceRepository;
+    private final RedisAggregationQueryService redisAggregationQueryService;
 
     private static final int CHUNK_SIZE= 100;
 
@@ -107,12 +107,11 @@ public class WeeklyPriceJobConfig {
     @StepScope
     public WeeklyPriceProcessor weeklyPriceProcessor() {
 
-        return new WeeklyPriceProcessor(dailyPriceRepository);
+        return new WeeklyPriceProcessor(redisAggregationQueryService);
     }
 
     /**
      * Writer 스텝
-     * 집계 서비스를 통해 대신 MyBatis 실행
      * @return
      */
     @Bean

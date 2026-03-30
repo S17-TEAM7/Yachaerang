@@ -1,4 +1,4 @@
-package com.yachaerang.batch.service;
+package com.yachaerang.batch.service.job;
 
 import com.yachaerang.batch.domain.dto.JobStartResponseDto;
 import com.yachaerang.batch.exception.GeneralException;
@@ -28,6 +28,7 @@ public class BatchJobService {
     private final Job weeklyPriceJob;
     private final Job monthlyPriceJob;
     private final Job yearlyPriceJob;
+    private final Job redisAggregationInitJob;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -49,7 +50,7 @@ public class BatchJobService {
     }
 
     /**
-     * 특정 기간의 데이터 수집 (비동기 실행)
+     * 특정 기간의 데이터 수집
      * 중복 실행 정책: requestId(UUID)를 JobParameter에 포함하여 동일 날짜 범위도 독립 Job으로 처리 (중복 허용)
      */
     public JobStartResponseDto collectDateRange(LocalDate startDate, LocalDate endDate)
@@ -89,7 +90,7 @@ public class BatchJobService {
     }
 
     /**
-     * 특정 주간 가격 집계 실행 (비동기)
+     * 특정 주간 가격 집계 실행
      */
     public JobStartResponseDto runWeeklyAggregation(Integer year, Integer week) {
 
@@ -189,7 +190,7 @@ public class BatchJobService {
 
 
     /**
-     * 특정 기간의 월간 가격 집계 실행 (비동기)
+     * 특정 기간의 월간 가격 집계 실행
      */
     public JobStartResponseDto runMonthlyAggregation(Integer year, Integer month) throws JobExecutionException {
         if (year == null || month == null) {
@@ -231,7 +232,30 @@ public class BatchJobService {
     }
 
     /**
-     * 특정 연도의 연간 가격 집계 실행 (비동기)
+     * Redis 초기화 Job 실행
+     */
+    public JobStartResponseDto runRedisInit() {
+        log.info("Redis 집계 초기화 Job 접수");
+        try {
+            JobParameters params = new JobParametersBuilder()
+                    .addLong("timestamp", System.currentTimeMillis())
+                    .toJobParameters();
+
+            JobExecution execution = asyncJobLauncher.run(redisAggregationInitJob, params);
+            log.info("Redis 초기화 Job 접수 완료: jobId={}, status={}", execution.getJobId(), execution.getStatus());
+            return JobStartResponseDto.builder()
+                    .jobId(execution.getJobId())
+                    .status(execution.getStatus().toString())
+                    .message("Redis aggregation init job accepted")
+                    .build();
+        } catch (Exception e) {
+            log.error("Redis 초기화 Job 실행 실패", e);
+            throw new RuntimeException("Job 실행 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 특정 연도의 연간 가격 집계 실행
      */
     public JobStartResponseDto runYearlyAggregation(Integer year) {
         if (year == null) {
