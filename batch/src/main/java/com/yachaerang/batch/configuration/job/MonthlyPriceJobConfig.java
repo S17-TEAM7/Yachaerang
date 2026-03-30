@@ -110,7 +110,6 @@ public class MonthlyPriceJobConfig {
 
     /**
      * Writer 스텝
-     * 집계 서비스를 통해 대신 MyBatis 실행
      * @return
      */
     @Bean

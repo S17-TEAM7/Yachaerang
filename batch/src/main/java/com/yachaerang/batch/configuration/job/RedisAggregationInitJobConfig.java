@@ -2,12 +2,14 @@ package com.yachaerang.batch.configuration.job;
 
 import com.yachaerang.batch.domain.entity.DailyPrice;
 import com.yachaerang.batch.listener.JobCompletionListener;
+import com.yachaerang.batch.listener.RedisVersionStepListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.service.redis.RedisAggregationWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -32,6 +34,7 @@ public class RedisAggregationInitJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager platformTransactionManager;
     private final JobCompletionListener jobCompletionListener;
+    private final RedisVersionStepListener redisVersionStepListener;
     private final DailyPriceRepository dailyPriceRepository;
     private final RedisAggregationWriter redisAggregationWriter;
 
@@ -52,6 +55,7 @@ public class RedisAggregationInitJobConfig {
                 .<DailyPrice, DailyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
                 .reader(dailyPriceInitReader())
                 .writer(redisAggregationInitWriter())
+                .listener(redisVersionStepListener)
                 .build();
     }
 
@@ -59,6 +63,7 @@ public class RedisAggregationInitJobConfig {
     daily_price 전체를 CHUNK_SIZE 단위로 페이징 조회하는 Reader
      */
     @Bean
+    @StepScope
     public ItemReader<DailyPrice> dailyPriceInitReader() {
         return new ItemReader<>() {
             private int offset = 0;

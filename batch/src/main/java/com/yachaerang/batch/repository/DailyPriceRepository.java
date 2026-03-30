@@ -57,13 +57,11 @@ public interface DailyPriceRepository {
             @Param("weekEndDate") LocalDate weekEndDate
     );
 
-    // 월간에 사용
-
     /**
      * 특정 달에서의 가장 빠른 날의 가격 조회
      * @param productCode : 대상 상품
-     * @param monthStartDate : 특정 달의 시작일자(호출 시점에서 계산 필요)
-     * @param monthEndDate : 특정 달의 종료일자(호출 시점에서 계산 필요)
+     * @param monthStartDate : 특정 달의 시작일자
+     * @param monthEndDate : 특정 달의 종료일자
      * @return : 가격
      */
     Long findEarliestPriceInMonth(@Param("productCode") String productCode,
@@ -73,8 +71,8 @@ public interface DailyPriceRepository {
     /**
      * 특정 달에서의 가장 마지막 날의 가격 조회
      * @param productCode : 대상 상품
-     * @param monthStartDate : 특정 달의 시작일자(호출 시점에서 계산 필요)
-     * @param monthEndDate : 특정 달의 종료일자(호출 시점에서 계산 필요)
+     * @param monthStartDate : 특정 달의 시작일자
+     * @param monthEndDate : 특정 달의 종료일자
      * @return : 가격
      */
     Long findLatestPriceInMonth(@Param("productCode") String productCode,
@@ -85,4 +83,14 @@ public interface DailyPriceRepository {
     Redis 초기화용 전체 조회 (페이징)
      */
     List<DailyPrice> findAllPaged(@Param("offset") int offset, @Param("limit") int limit);
+
+    /*
+    날짜 범위 내 데이터 조회 (페이징) - Redis 집계 Step 전용
+     */
+    List<DailyPrice> findByPriceDateBetweenPaged(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("offset") int offset,
+            @Param("limit") int limit
+    );
 }

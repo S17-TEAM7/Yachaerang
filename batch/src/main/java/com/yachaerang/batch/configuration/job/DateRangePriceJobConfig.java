@@ -8,6 +8,7 @@ import com.yachaerang.batch.domain.entity.DailyPrice;
 import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.listener.MdcStepListener;
+import com.yachaerang.batch.listener.RedisVersionStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.repository.ProductRepository;
@@ -24,6 +25,7 @@ import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +35,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +59,7 @@ public class DateRangePriceJobConfig {
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
     private final RedisAggregationWriter redisAggregationWriter;
+    private final RedisVersionStepListener redisVersionStepListener;
     @Qualifier("partitionTaskExecutor")
     private final ThreadPoolTaskExecutor partitionTaskExecutor;
 
@@ -72,6 +76,7 @@ public class DateRangePriceJobConfig {
                 .incrementer(new RunIdIncrementer())
                 .listener(jobCompletionListener)
                 .start(dateRangePartitionStep())
+                .next(dateRangeRedisAggregationStep())
                 .build();
     }
 
@@ -177,6 +182,48 @@ public class DateRangePriceJobConfig {
 
     @Bean
     public DailyPriceWriter partitionedPriceWriter() {
-        return new DailyPriceWriter(dailyPriceRepository, redisAggregationWriter);
+        return new DailyPriceWriter(dailyPriceRepository);
+    }
+
+    /**
+     * Redis 집계 Step: DB에 실제 저장된 데이터를 기준으로 Redis를 갱신
+     */
+    @Bean
+    @StepScope
+    public ItemReader<DailyPrice> dateRangeRedisAggregationReader(
+            @Value("#{jobParameters['startDate']}") String startDateStr,
+            @Value("#{jobParameters['endDate']}") String endDateStr) {
+        LocalDate startDate = LocalDate.parse(startDateStr, FORMATTER);
+        LocalDate endDate = LocalDate.parse(endDateStr, FORMATTER);
+        return new ItemReader<>() {
+            private int offset = 0;
+            private List<DailyPrice> buffer = Collections.emptyList();
+            private int bufferIndex = 0;
+
+            @Override
+            public DailyPrice read() {
+                if (bufferIndex >= buffer.size()) {
+                    buffer = dailyPriceRepository.findByPriceDateBetweenPaged(startDate, endDate, offset, CHUNK_SIZE);
+                    offset += buffer.size();
+                    bufferIndex = 0;
+                    if (buffer.isEmpty()) {
+                        log.info("Redis 집계 Reader 완료: {} ~ {}, 총 {} 건", startDate, endDate, offset);
+                        return null;
+                    }
+                    log.debug("Redis 집계 Reader 페이지 로드: offset={}, size={}", offset - buffer.size(), buffer.size());
+                }
+                return buffer.get(bufferIndex++);
+            }
+        };
+    }
+
+    @Bean
+    public Step dateRangeRedisAggregationStep() {
+        return new StepBuilder("dateRangeRedisAggregationStep", jobRepository)
+                .<DailyPrice, DailyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
+                .reader(dateRangeRedisAggregationReader(null, null))
+                .writer(chunk -> chunk.getItems().forEach(redisAggregationWriter::updateAggregations))
+                .listener(redisVersionStepListener)
+                .build();
     }
 }
