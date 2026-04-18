@@ -33,7 +33,7 @@ public class RedisVersionStepListener implements StepExecutionListener {
     }
 
     /**
-     * endDate → targetDate → 오늘 순으로 기준 날짜를 결정한다.
+     * endDate → targetDate → 오늘 순으로 기준 날짜를 결정
      */
     private LocalDate resolveReferenceDate(StepExecution stepExecution) {
         String dateStr = stepExecution.getJobParameters().getString("endDate");
