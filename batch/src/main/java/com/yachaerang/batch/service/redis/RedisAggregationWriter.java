@@ -38,19 +38,36 @@ public class RedisAggregationWriter {
     /**
      * 새 버전을 할당하기 위한 시작 때 호출하는 메서드 (Redis INCR)
      */
-    public long startNewVersion() {
-        Long v = redisTemplate.opsForValue().increment(VERSION_SEQ_KEY);
-        pendingVersion = (v != null) ? v : 1L;
+    public long startNewVersion(LocalDate referenceDate) {
+        pendingVersion = Long.parseLong(referenceDate.format(DATE_SCORE_FMT));
         log.info("Redis 집계 새 버전 할당: v{}", pendingVersion);
         return pendingVersion;
     }
 
     /**
-     * Redis의 Step 완료 후 버전 호출
+     * Redis의 Step 완료 후 버전 커밋 및 pendingVersion 초기화
      */
     public void commitVersion() {
         redisTemplate.opsForValue().set(ACTIVE_VERSION_KEY, String.valueOf(pendingVersion));
         log.info("Redis 집계 버전 커밋: v{}", pendingVersion);
+        pendingVersion = 0L;
+    }
+
+    /**
+     * Step 실패 시 pendingVersion 초기화
+     */
+    public void resetPendingVersion() {
+        log.info("Redis 집계 pendingVersion 초기화");
+        pendingVersion = 0L;
+    }
+
+    /**
+     * 쓰기에 사용할 버전 결정
+     * - pendingVersion > 0: 재집계(Init) 진행 중 → pendingVersion 사용
+     * - pendingVersion == 0: 일반 Daily 실행 → active version 사용
+     */
+    private long resolveVersion() {
+        return (pendingVersion > 0) ? pendingVersion : getActiveVersion();
     }
 
     /**
@@ -58,7 +75,7 @@ public class RedisAggregationWriter {
      */
     public long getActiveVersion() {
         String v = redisTemplate.opsForValue().get(ACTIVE_VERSION_KEY);
-        if (v == null) return 0L;
+        if (v == null) return 1L;
         try {
             return Long.parseLong(v);
         } catch (NumberFormatException e) {
@@ -68,9 +85,9 @@ public class RedisAggregationWriter {
     }
 
     /**
-     * KEYS[1] : weekly  hash key  (v{N}:agg:weekly:...)
-     * KEYS[2] : monthly hash key  (v{N}:agg:monthly:...)
-     * KEYS[3] : yearly  hash key  (v{N}:agg:yearly:...)
+     * KEYS[1] : weekly  hash key       (v{N}:agg:weekly:...)
+     * KEYS[2] : monthly hash key       (v{N}:agg:monthly:...)
+     * KEYS[3] : yearly  hash key       (v{N}:agg:yearly:...)
      * KEYS[4] : weekly  index set key  (v{N}:idx:weekly:...)
      * KEYS[5] : monthly index set key  (v{N}:idx:monthly:...)
      * KEYS[6] : yearly  index set key  (v{N}:idx:yearly:...)
@@ -80,8 +97,6 @@ public class RedisAggregationWriter {
      * ARGV[4] : monthly TTL (seconds)
      * ARGV[5] : yearly  TTL (seconds)
      * ARGV[6] : productCode
-     *
-     * <p>버전 prefix로 키가 격리되므로 별도의 :processed set 중복 체크가 불필요하다.
      */
     private static final String AGG_LUA = """
         local function agg(hash_key, idx_key, ttl)
@@ -144,7 +159,7 @@ public class RedisAggregationWriter {
         int year     = priceDate.getYear();
         int month    = priceDate.getMonthValue();
 
-        long v = pendingVersion;
+        long v = resolveVersion();
 
         try {
             redisTemplate.execute(AGG_SCRIPT,
@@ -167,4 +182,5 @@ public class RedisAggregationWriter {
             throw e;
         }
     }
+
 }

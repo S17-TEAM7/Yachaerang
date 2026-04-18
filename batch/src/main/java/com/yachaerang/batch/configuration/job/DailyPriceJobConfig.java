@@ -8,7 +8,6 @@ import com.yachaerang.batch.domain.entity.DailyPrice;
 import com.yachaerang.batch.listener.ItemSkipListener;
 import com.yachaerang.batch.listener.JobCompletionListener;
 import com.yachaerang.batch.listener.MdcStepListener;
-import com.yachaerang.batch.listener.RedisVersionStepListener;
 import com.yachaerang.batch.listener.StepExecutionListener;
 import com.yachaerang.batch.repository.DailyPriceRepository;
 import com.yachaerang.batch.repository.ProductRepository;
@@ -59,7 +58,6 @@ public class DailyPriceJobConfig {
     private final ProductRepository productRepository;
     private final DailyPriceRepository dailyPriceRepository;
     private final RedisAggregationWriter redisAggregationWriter;
-    private final RedisVersionStepListener redisVersionStepListener;
     @Qualifier("partitionTaskExecutor")
     private final ThreadPoolTaskExecutor partitionTaskExecutor;
 
@@ -219,7 +217,6 @@ public class DailyPriceJobConfig {
                 .<DailyPrice, DailyPrice>chunk(CHUNK_SIZE, platformTransactionManager)
                 .reader(dailyRedisAggregationReader(null))
                 .writer(chunk -> chunk.getItems().forEach(redisAggregationWriter::updateAggregations))
-                .listener(redisVersionStepListener)
                 .build();
     }
 }

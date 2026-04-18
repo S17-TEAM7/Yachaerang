@@ -16,8 +16,7 @@ public final class RedisAggregationKeys {
     public static final String IDX_YEARLY_KEY  = "v%d:idx:yearly:%d";
 
     // Version 관리 Key
-    public static final String ACTIVE_VERSION_KEY = "agg:active_version"; // 현재 live 버전
-    public static final String VERSION_SEQ_KEY    = "agg:version_seq";    // 단조 증가 시퀀스
+    public static final String ACTIVE_VERSION_KEY = "price:agg:active_version";
 
     private RedisAggregationKeys() {}
 }
